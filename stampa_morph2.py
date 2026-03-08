@@ -1,4 +1,5 @@
 import unreal
+import csv
 
 #mapping
 arkit_to_metahuman = {
@@ -88,11 +89,24 @@ print("Numero morph targets Skeleton Mesh:", len(morph_targets))
 
 mesh_names = [m.get_name() for m in morph_targets]
 
-
+'''
 #apro morph target csv
 txt_path = "F:/Sincronizzazione iCloud/iCloudDrive/UNIFI/Tesi/morph target csv.txt"
 with open(txt_path, 'r', encoding='utf-8') as f:
     arkit_csv_names = [riga.strip().removeprefix("blendShapes.") for riga in f]
+'''
+
+
+CSV_PATH = r"C:/Users/alber/Desktop/animation_frames.csv"
+
+with open(CSV_PATH, newline='') as f:
+    reader = csv.DictReader(f)
+    cleaned_keys  = [key.strip().removeprefix("blendShapes.")
+                         for key in reader.fieldnames if key.strip() != '']
+    arkit_csv_names = cleaned_keys.copy()
+    rows = list(reader)
+
+print("lista chiavi:", arkit_csv_names)
 
 morphs = []
 for arkit_name in arkit_csv_names:
