@@ -106,7 +106,10 @@ with open(CSV_PATH, newline='') as f:
     arkit_csv_names = cleaned_keys.copy()
     rows = list(reader)
 
+arkit_csv_names.pop(0)
 print("lista chiavi:", arkit_csv_names)
+print("numero chiavi:", len(arkit_csv_names))
+
 
 morphs = []
 for arkit_name in arkit_csv_names:
