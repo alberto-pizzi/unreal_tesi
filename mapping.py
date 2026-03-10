@@ -190,25 +190,7 @@ for name_mh, arkit_name in zip(morphs_mh, arkit_csv_names):
     unreal.AnimationLibrary.add_float_curve_keys(anim_seq, name_mh,times,values)
 
 
-
-"""
-# =========================
-# CREA CURVE E AGGIUNGI KEYFRAME
-# =========================
-for curve in curve_names:
-    anim_seq.add_float_curve(unreal.Name(curve))
-    for row in rows:
-        time = float(row["timeCode"])
-        value = float(row["blendShapes." + curve])
-        unreal.AnimationLibrary.add_float_curve_key()
-        anim_seq.add_float_curve_key(unreal.Name(curve), time, value)
-
-# =========================
-# SALVA L'ASSET
-# =========================
-anim_seq.modify(True)
+#salva
 unreal.EditorAssetLibrary.save_loaded_asset(anim_seq)
+print("AnimSequence salvata con successo:", anim_seq.get_path_name())
 
-print("AnimSequence creata con successo:", anim_seq.get_path_name())
-
-"""
