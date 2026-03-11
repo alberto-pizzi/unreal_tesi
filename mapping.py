@@ -2,6 +2,8 @@ import unreal
 import csv
 import os
 
+from test_script import csv_path
+
 #mapping
 arkit_to_metahuman = {
 
@@ -90,6 +92,10 @@ ASSET_PATH = "/Game/MetaHumans/Animations"
 ASSET_NAME = "ProvaAnimazione"
 FRAME_RATE = 30.0
 
+mh_prefix = "head_lod0_mesh__"
+csv_prefix = "blendShapes."
+time_code_tag = "timeCode"
+
 SKELETON_PATH = "/Game/MetaHumans/Common/Face/Face_Archetype_Skeleton.Face_Archetype_Skeleton"
 
 
@@ -112,37 +118,25 @@ anim_seq = asset_tools.create_asset(ASSET_NAME, ASSET_PATH, unreal.AnimSequence,
 # =========================
 # LEGGI CSV
 # =========================
-prefix = "blendShapes."
-time_code_tag = "timeCode"
 
 with open(CSV_PATH, newline='') as f:
     reader = csv.DictReader(f)
     #tolgo il prefisso a tutti i nomi dei blendshape
-    cleaned_keys  = [key.strip().removeprefix(prefix)
+    cleaned_keys  = [key.strip().removeprefix(csv_prefix)
                          for key in reader.fieldnames if key.strip() != '']
     arkit_csv_names = cleaned_keys.copy()
     rows = list(reader)
 
 
 #rimuovo primo elemento "timeCode"
-arkit_csv_names.pop(0)
+if arkit_csv_names and arkit_csv_names[0] == time_code_tag:
+    arkit_csv_names.pop(0)
 
 if not rows:
     raise RuntimeError("CSV vuoto o malformato")
 
 print("CSV letto correttamente")
 
-'''
-# imposto durata animazione
-last_time = float(rows[-1][time_code_tag])
-anim_seq.set_editor_property("sequence_length", last_time)
-anim_seq.set_editor_property("number_of_frames", len(rows)-1)
-
-print("Durate impostate")
-
-'''
-
-mh_prefix = "head_lod0_mesh__"
 #creo list morph mappati (da arkit a metahuman)
 morphs_mh = []
 for arkit_name in arkit_csv_names:
@@ -151,7 +145,6 @@ for arkit_name in arkit_csv_names:
         morphs_mh.append(morph_mh)
 
 print("Mappatura completa")
-
 
 
 #creo curve per ogni blendshape (i morphs mappati sono 52)
@@ -170,7 +163,7 @@ for name_mh, arkit_name in zip(morphs_mh, arkit_csv_names):
 
     for row in rows:
         times.append(float(row[time_code_tag]))
-        values.append(float(row[prefix+arkit_name]))
+        values.append(float(row[csv_prefix + arkit_name]))
 
     unreal.AnimationLibrary.add_float_curve_keys(anim_seq, name_mh,times,values)
 
