@@ -121,10 +121,7 @@ with open(CSV_PATH, newline='') as f:
     cleaned_keys  = [key.strip().removeprefix(prefix)
                          for key in reader.fieldnames if key.strip() != '']
     arkit_csv_names = cleaned_keys.copy()
-    rows = []
-    for row in reader:
-        new_row = {new_key: row[old_key] for old_key, new_key in zip(reader.fieldnames, cleaned_keys)}
-        rows.append(new_row)
+    rows = list(reader)
 
 
 #rimuovo primo elemento "timeCode"
@@ -134,9 +131,6 @@ if not rows:
     raise RuntimeError("CSV vuoto o malformato")
 
 print("CSV letto correttamente")
-# nomi delle curve
-#curve_names = [c.replace("blendShapes.", "") for c in rows[0].keys() if c != "timeCode"]
-#print(curve_names)
 
 '''
 # imposto durata animazione
@@ -176,16 +170,7 @@ for name_mh, arkit_name in zip(morphs_mh, arkit_csv_names):
 
     for row in rows:
         times.append(float(row[time_code_tag]))
-        values.append(float(row[arkit_name]))
-
-    """
-    if c <1000:
-        print(arkit_name,": ")
-        print("time: ")
-        print(times)
-        print("value: ")
-        print(values)
-    """
+        values.append(float(row[prefix+arkit_name]))
 
     unreal.AnimationLibrary.add_float_curve_keys(anim_seq, name_mh,times,values)
 
