@@ -40,19 +40,19 @@ def spawn_camera_actor(actor_obj):
     rotation = unreal.Rotator(0.0, 0.0, -90.0)
 
     # Spawn del CameraActor nella posizione e rotazione specificate
-    camera_actor = actor_subsystem.spawn_actor_from_class(camera_class, camera_location, rotation)
+    actor_camera = actor_subsystem.spawn_actor_from_class(camera_class, camera_location, rotation)
 
     #imposta parametri di fuoco
-    camera_component = camera_actor.get_component_by_class(unreal.CameraComponent.static_class())
+    camera_component = actor_camera.get_component_by_class(unreal.CameraComponent.static_class())
     camera_component.set_editor_property("field_of_view",75.0)
     camera_component.set_editor_property("aspect_ratio", 1.5)
 
-    if camera_actor:
-        camera_actor.set_actor_label("ActorCam")
+    if actor_camera:
+        actor_camera.set_actor_label("ActorCam")
     else:
         unreal.log_warning("Spawn Actor fallito")
 
-    return camera_actor
+    return actor_camera
 
 def despawn_camera_actor(actor_camera_obj):
     despawn_metahuman(actor_camera_obj)
