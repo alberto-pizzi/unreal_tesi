@@ -2,6 +2,19 @@ import unreal
 import time
 
 MH_BASE_PATH = "/Game/MetaHumans/"
+LS_BASE_PATH = "/Game/LevelSequences/"
+
+
+def create_level_sequence(ls_name):
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    factory = unreal.LevelSequenceFactoryNew()
+    ls = asset_tools.create_asset(ls_name, LS_BASE_PATH, unreal.LevelSequence, factory)
+    if ls:
+        print("Level Sequence Created Successfully!")
+    else:
+        print("Failed to create Level Sequence!")
+    return ls
+
 
 def select_actor(mh_official_name):
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -72,10 +85,17 @@ if __name__ == "__main__":
     else:
         print("Non selezionato")
     '''
-    actor = select_actor("Bernice")
+    sequence_filename = "PrimaSequenza"
+    actor = spawn_metahuman("Bernice")
+    ls = create_level_sequence(sequence_filename)
+    #actors = [actor]
+    #add_actors_to_sequencer(sequence_filename,actors)
+
+
     #camera_actor = spawn_camera_actor(actor)
 
-    visible(actor,False)
+    #visible(actor,False)
+
 
 
 
