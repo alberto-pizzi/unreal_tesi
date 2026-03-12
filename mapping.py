@@ -1,8 +1,5 @@
 import unreal
 import csv
-import os
-
-from test_script import csv_path
 
 #mapping
 arkit_to_metahuman = {
@@ -87,88 +84,110 @@ arkit_to_metahuman = {
 # =========================
 # CONFIG
 # =========================
-CSV_PATH = r"C:/Users/alber/Desktop/animation_frames.csv"
-ASSET_PATH = "/Game/MetaHumans/Animations"
-ASSET_NAME = "ProvaAnimazione"
+CSV_PATH = r"C:/Users/alber/Desktop/"
+CSV_NAME = "animation_frames.csv"
+ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations"
+ANIMATION_NAME = "ProvaAnimazione"
 FRAME_RATE = 30.0
 
+SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
+SKELETON_NAME = "Face_Archetype_Skeleton.Face_Archetype_Skeleton"
+
+#prefissi
 mh_prefix = "head_lod0_mesh__"
 csv_prefix = "blendShapes."
 time_code_tag = "timeCode"
 
-SKELETON_PATH = "/Game/MetaHumans/Common/Face/Face_Archetype_Skeleton.Face_Archetype_Skeleton"
-
-
-
 # =========================
 # CARICA SKELETON
 # =========================
-skeleton = unreal.load_asset(SKELETON_PATH)
-if not skeleton:
-    raise RuntimeError(f"Skeleton non trovato: {SKELETON_PATH}")
+def load_skeleton(skeleton_filename):
+    skeleton = unreal.load_asset(SKELETON_PATH+skeleton_filename)
+    if not skeleton:
+        raise RuntimeError(f"Skeleton non trovato: {SKELETON_PATH} con nome: {skeleton_filename}")
+    return skeleton
 
 # =========================
 # CREA ANIM SEQUENCE
 # =========================
-factory = unreal.AnimSequenceFactory()
-factory.target_skeleton = skeleton
-asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-anim_seq = asset_tools.create_asset(ASSET_NAME, ASSET_PATH, unreal.AnimSequence, factory)
+def create_animation_sequence(skeleton, animation_filename):
+    factory = unreal.AnimSequenceFactory()
+    factory.target_skeleton = skeleton
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    anim_seq = asset_tools.create_asset(animation_filename, ANIMATION_PATH, unreal.AnimSequence, factory)
+    return anim_seq
 
 # =========================
 # LEGGI CSV
 # =========================
+def read_csv(name_file):
 
-with open(CSV_PATH, newline='') as f:
-    reader = csv.DictReader(f)
-    #tolgo il prefisso a tutti i nomi dei blendshape
-    cleaned_keys  = [key.strip().removeprefix(csv_prefix)
-                         for key in reader.fieldnames if key.strip() != '']
-    arkit_csv_names = cleaned_keys.copy()
-    rows = list(reader)
+    with open(CSV_PATH+name_file, newline='') as f:
+        reader = csv.DictReader(f)
+        #tolgo il prefisso a tutti i nomi dei blendshape
+        cleaned_keys  = [key.strip().removeprefix(csv_prefix)
+                             for key in reader.fieldnames if key.strip() != '']
+        arkit_csv_names = cleaned_keys.copy()
+        rows = list(reader)
+
+    #rimuovo primo elemento "timeCode"
+    if arkit_csv_names and arkit_csv_names[0] == time_code_tag:
+        arkit_csv_names.pop(0)
+
+    if not rows:
+        raise RuntimeError("CSV vuoto o malformato")
+
+    print("CSV letto correttamente")
+    return rows,arkit_csv_names
+
+#mapping
+def map_blendshapes(csv_names,map):
+    #creo list morph mappati (da arkit a metahuman)
+    morphs_mh = []
+    for arkit_name in csv_names:
+        if arkit_name in map:
+            morph_mh = mh_prefix + map[arkit_name]
+            morphs_mh.append(morph_mh)
+
+    print("Mappatura completa")
+    return morphs_mh
+
+#crea curve
+def create_curves(animation_sequence, morphs_mh):
+    #creo curve per ogni blendshape (i morphs mappati sono 52)
+    for name_mh in morphs_mh:
+        unreal.AnimationLibrary.add_curve(animation_sequence, name_mh,unreal.RawCurveTrackTypes.RCT_FLOAT)
+
+    print("Tutte le curve aggiunte")
+
+#inserire keyframes
+def insert_keyframes(csv_rows,animation_sequence, morphs_mh,arkit_csv_names):
+    for name_mh, arkit_name in zip(morphs_mh, arkit_csv_names):
+        times = unreal.Array(float)
+        values = unreal.Array(float)
+
+        for row in csv_rows:
+            times.append(float(row[time_code_tag]))
+            values.append(float(row[csv_prefix + arkit_name]))
+
+        unreal.AnimationLibrary.add_float_curve_keys(animation_sequence, name_mh,times,values)
+
+    print("Tutti i keyframes aggiunti!")
 
 
-#rimuovo primo elemento "timeCode"
-if arkit_csv_names and arkit_csv_names[0] == time_code_tag:
-    arkit_csv_names.pop(0)
-
-if not rows:
-    raise RuntimeError("CSV vuoto o malformato")
-
-print("CSV letto correttamente")
-
-#creo list morph mappati (da arkit a metahuman)
-morphs_mh = []
-for arkit_name in arkit_csv_names:
-    if arkit_name in arkit_to_metahuman:
-        morph_mh = mh_prefix + arkit_to_metahuman[arkit_name]
-        morphs_mh.append(morph_mh)
-
-print("Mappatura completa")
 
 
-#creo curve per ogni blendshape (i morphs mappati sono 52)
-for name_mh in morphs_mh:
-    unreal.AnimationLibrary.add_curve(anim_seq, name_mh,unreal.RawCurveTrackTypes.RCT_FLOAT)
+if __name__ == "__main__":
+    print("inizio main")
+    skeleton = load_skeleton(SKELETON_NAME)
+    anim_seq = create_animation_sequence(skeleton, ANIMATION_NAME)
+    csv_rows,arkit_csv_names = read_csv(CSV_NAME)
+    morphs_mh = map_blendshapes(arkit_csv_names,arkit_to_metahuman)
+    create_curves(anim_seq, morphs_mh)
+    insert_keyframes(csv_rows, anim_seq, morphs_mh, arkit_csv_names)
 
-print("Tutte le curve aggiunte")
-#inserire keyframe
-
-print(list(zip(morphs_mh, arkit_csv_names)))
-
-
-for name_mh, arkit_name in zip(morphs_mh, arkit_csv_names):
-    times = unreal.Array(float)
-    values = unreal.Array(float)
-
-    for row in rows:
-        times.append(float(row[time_code_tag]))
-        values.append(float(row[csv_prefix + arkit_name]))
-
-    unreal.AnimationLibrary.add_float_curve_keys(anim_seq, name_mh,times,values)
-
-
-#salva
-unreal.EditorAssetLibrary.save_loaded_asset(anim_seq)
-print("AnimSequence salvata con successo:", anim_seq.get_path_name())
+    # salva
+    unreal.EditorAssetLibrary.save_loaded_asset(anim_seq)
+    print("AnimSequence salvata con successo:", anim_seq.get_path_name())
+    print("fine main")
 
