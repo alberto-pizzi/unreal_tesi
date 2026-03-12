@@ -57,7 +57,8 @@ def spawn_camera_actor(actor_obj):
 def despawn_camera_actor(actor_camera_obj):
     despawn_metahuman(actor_camera_obj)
 
-
+def visible(actor_obj,is_visible):
+    actor_obj.set_is_temporarily_hidden_in_editor(not is_visible)
 
 
 if __name__ == "__main__":
@@ -71,8 +72,11 @@ if __name__ == "__main__":
     else:
         print("Non selezionato")
     '''
-    actor = spawn_metahuman("Bernice")
-    camera_actor = spawn_camera_actor(actor)
+    actor = select_actor("Bernice")
+    #camera_actor = spawn_camera_actor(actor)
+
+    visible(actor,False)
+
 
 
     print("Fine Main!")
