@@ -15,6 +15,7 @@ def select_actor(mh_official_name):
 def spawn_metahuman(mh_official_name):
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     bp_path = MH_BASE_PATH + mh_official_name + "/BP_" + mh_official_name + ".BP_" + mh_official_name
+    # inserire qui le coordinate se necessario
     location = unreal.Vector(0,0,0)
     rotation = unreal.Rotator(0, 0, 0)
     bp_class = unreal.EditorAssetLibrary.load_blueprint_class(bp_path)
