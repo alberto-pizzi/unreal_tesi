@@ -1,98 +1,81 @@
 import os
 import subprocess
-import glob
-import grpc
+import sys
 from pathlib import Path
 
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path(__file__).resolve().parent
 
-# Configurazioni
+# Settings
 API_KEY = "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"  # NVIDIA API
 FUNCTION_ID = "8efc55f5-6f00-424e-afe9-26212cd2c630"  #  Mark model
-CONFIG_YAML = "config/config_mark.yml"  # File YAM (mark) con emozioni
-AUDIO_DIR = "./input_audio_files"  # Cartella input
-OUTPUT_DIR = "./output_csv" #cartella output
-CLIENT_DIR = "./Audio2Face-3D-Samples/scripts/audio2face_3d_api_client"
-
+AUDIO_DIR = BASE_DIR / "input_audio_files"  # input folder
+OUTPUT_FOLDER = "output_csv" # output folder
 CLIENT_NAME = "nim_a2f_3d_client.py"
-outdir = "output_csv"
+CLIENT_DIR = BASE_DIR / "Audio2Face-3D-Samples"/"scripts"/"audio2face_3d_api_client"
+OUTPUT_DIR = BASE_DIR / OUTPUT_FOLDER
+CONFIG_YAML = CLIENT_DIR / "config" / "config_mark.yml"  # file YAM (mark) with emotions
 
 
-# FIXME da fixare e testare
+
 def batch_a2f_csv():
-    #OUTPUT_DIR.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    # find all WAV files
+    wav_file_paths = list(AUDIO_DIR.glob("*.wav"))
+    print("Audio file paths: ", str(wav_file_paths))
 
-    client_path = CLIENT_DIR + "/" + CLIENT_NAME
+    for wav_file_path in wav_file_paths:
+        run_a2f(wav_file_path)
 
-    print("Client path: ", client_path)
-    # Trova tutti i file WAV
-    audio_file_paths = glob.glob(AUDIO_DIR+"/*.wav")
-    print("Audio file paths: ", audio_file_paths)
+def run_a2f(audio_file_path: Path):
+    client_path = CLIENT_DIR / CLIENT_NAME
+    print("Client path: ", str(client_path))
 
+    audio_filename = audio_file_path.stem
+    #output_blendshapes = OUTPUT_DIR / f"{audio_filename}_blendshapes.csv"
+    #print(str(output_blendshapes))
+    # print(str(audio_file_path))
 
-    for audio_file_path in audio_file_paths:
+    print(str(audio_filename))
 
-        audio_file_path = Path(audio_file_path)
+    cmd = [
+        sys.executable, str(CLIENT_DIR/CLIENT_NAME),
+        str(audio_file_path), str(CONFIG_YAML),
+        "--apikey", API_KEY,
+        "--function-id", FUNCTION_ID
+    ]
 
+    print("Executing: ", cmd)
 
+    print(f"Processing: {str(audio_file_path)}")
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=OUTPUT_DIR)
 
-        audio_filename = audio_file_path.stem
-        output_blendshapes = OUTPUT_DIR +"/"+ f"{audio_filename}_blendshapes.csv"
-
-
-        print(audio_file_path)
-        print(audio_filename)
-        print(output_blendshapes)
-
-        percorso_audio = Path(AUDIO_DIR) / f"{audio_filename}.wav"
-
-
-        cmd = [
-            "python", CLIENT_NAME,
-            str(percorso_audio.resolve()), "./"+CONFIG_YAML,
-            "--apikey", API_KEY,
-            "--function-id", FUNCTION_ID
-        ]
-
-        print("Executing: ", cmd)
-
-        print(f"Processing: {audio_file_path}")
-        result = subprocess.run(cmd, capture_output=True, text=True,cwd=CLIENT_DIR)
-
-        if result.returncode == 0:
-            print(f"Completed: {output_blendshapes}")
-        else:
-            print(f"Error: {result.stderr}")
+    if result.returncode == 0:
+        folder = find_folder_names_by_prefix("2026")[0]
+        rename_folder(folder, audio_filename)
+        print(f"Completed: {audio_filename}")
+    else:
+        print(f"Error: {result.stderr}")
 
 #TODO conviene rinominare anche i csv interni?
-#funziona con i percorsi assoluti
 def rename_folder(old_folder_name, new_folder_name):
-    path = Path().cwd() #prendo percorso assoluto corrente
-    folder_path = path /Path(outdir)
+    path = Path().cwd() #take current absolute path
+    folder_path = path /Path(OUTPUT_FOLDER)
     os.rename(folder_path / old_folder_name, folder_path / new_folder_name)
     print(f"Renamed: {old_folder_name} -> {new_folder_name}")
 
-# il prefisso dovrebbe essere "2026" secondo gli output, perché corrisponde all'anno di creazione del file output
+# WARNING: the prefix should be "2026" according to the outputs, because it corresponds to the year of creation of the output file
 def find_folder_names_by_prefix(prefix):
-    path = Path().cwd() #prendo percorso assoluto corrente
-    folder_path = path /Path(outdir)
+    path = Path().cwd() #take current absolute path
+    folder_path = path /Path(OUTPUT_FOLDER)
     folders = [d.stem for d in folder_path.iterdir() if d.is_dir() and d.name.startswith(prefix)]
     return folders
 
 
 if __name__ == "__main__":
-    print("inizio main python")
+    print("start main python")
 
+    batch_a2f_csv()
 
-    #print("prova_base: ", Path.cwd())
-    #batch_a2f_csv()
-    #rename_folder("C:/Users/alber/PycharmProjects/PythonProject1/output_csv/20260314_062333_765508","C:/Users/alber/PycharmProjects/PythonProject1/output_csv/provarinomina")
-    #rename_folder(find_numerical_folder_names()[0],"rinominata")
-
-    print("fine main python")
-
-
-    #subprocess.run("echo Ciao dal terminale", shell=True).
-    #subprocess.run("python script_batch_csv2.py", shell=True)
+    print("end main python")
 
