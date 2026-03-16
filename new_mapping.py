@@ -185,7 +185,7 @@ FRAME_RATE = 30.0
 
 SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
 SKELETON_NAME = "Face_Archetype_Skeleton"
-#LS_PATH = "/Game/LevelSequences/"
+#LS_PATH = "/Game/LevelSequences/" # FIXME
 LS_PATH = "/Game/"
 
 #prefixes
@@ -266,7 +266,7 @@ def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
     editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     world = editor_subsystem.get_editor_world()
 
-    # Opzioni di esportazione animazione
+    # export settings
     anim_seq_export_options = unreal.AnimSeqExportOption()
     anim_seq_export_options.export_transforms = True
     anim_seq_export_options.export_morph_targets = True
