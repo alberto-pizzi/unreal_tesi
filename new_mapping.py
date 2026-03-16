@@ -1,6 +1,7 @@
 import unreal
 import csv
 
+
 # map
 A2F_TO_METAHUMAN = {
 
@@ -178,12 +179,12 @@ A2F_TO_METAHUMAN = {
 
 CSV_PATH = r"C:/Users/alber/Desktop/"
 CSV_NAME = "animation_frames.csv"
-ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations"
-ANIMATION_NAME = "ProvaAnimazione"
+ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"
+ANIMATION_NAME = "AnimationFromRig"
 FRAME_RATE = 30.0
 
 SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
-SKELETON_NAME = "Face_Archetype_Skeleton.Face_Archetype_Skeleton"
+SKELETON_NAME = "Face_Archetype_Skeleton"
 #LS_PATH = "/Game/LevelSequences/"
 LS_PATH = "/Game/"
 
@@ -253,8 +254,58 @@ def insert_keyframes(level_sequence,weights_read_from_csv):
     print("Keyframe calculation complete!")
 
 
+def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
+    binding = level_sequence.find_binding_by_name("Face")
+
+    # set skeleton
+    skeleton = unreal.load_object(None,SKELETON_PATH+SKELETON_NAME+"."+SKELETON_NAME)
+    factory = unreal.AnimSequenceFactory()
+    factory.set_editor_property("target_skeleton", skeleton)
+
+    # get world
+    editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    world = editor_subsystem.get_editor_world()
+
+    # Opzioni di esportazione animazione
+    anim_seq_export_options = unreal.AnimSeqExportOption()
+    anim_seq_export_options.export_transforms = True
+    anim_seq_export_options.export_morph_targets = True
+
+    # create asset
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    anim_sequence = unreal.AssetTools.create_asset(
+        asset_tools,
+        asset_name=anim_seq_filename,
+        package_path=ANIMATION_PATH,
+        asset_class=unreal.AnimSequence,
+        factory=factory
+    )
+
+    # bake to animation sequence
+    unreal.SequencerTools.export_anim_sequence(
+        world,
+        level_sequence,
+        anim_sequence,
+        anim_seq_export_options,
+        binding,
+        create_link=False
+    )
+
+    #save
+    asset_path = anim_sequence.get_path_name()
+    success = unreal.EditorAssetLibrary.save_asset(asset_path)
+
+    print("Bake executed successfully!")
+
+def find_binding(level_sequence):
+    binding = level_sequence.find_binding_by_name("Body")
+    print(binding.get_tracks()[0].get_display_name())
 
 if __name__ == '__main__':
-    ls = load_level_sequence("NewLevelSequence")
-    rows, arkit_csv_names = read_csv(CSV_NAME)
-    insert_keyframes(ls,rows)
+    ls = load_level_sequence("NewRigSeq")
+    #bake_to_animation_sequence(ls,ANIMATION_NAME)
+
+    #get_all_binding(ls)
+    find_binding(ls)
+    #rows, arkit_csv_names = read_csv(CSV_NAME)
+    #insert_keyframes(ls,rows)
