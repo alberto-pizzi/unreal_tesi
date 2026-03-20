@@ -12,6 +12,11 @@ MH_BASE_PATH = "/Game/MetaHumans/"
 LS_BASE_PATH = "/Game/LevelSequences/"
 LS_PATH_TMP = "/Game/" #TODO to be delete
 
+camera_settings = {
+    "AspectRatio": 1.2,
+    "FieldOfView": 85.0,
+}
+
 def create_level_sequence(ls_name):
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
     factory = unreal.LevelSequenceFactoryNew()
@@ -101,27 +106,8 @@ def find_spawnable_bindings_by_substring(level_sequence, substring):
 
     return matches
 
-# FIXME fix location setting
-def set_spawnable_actor_location(binding_actor):
-    transform_tracks = binding_actor.find_tracks_by_type(unreal.MovieScene3DTransformTrack)
-    if transform_tracks:
-        transform_track = transform_tracks[0]
-        sections = transform_track.get_sections()
-        if sections:
-            section = sections[0]
-            print(section)
-            location_x_channel = section.get_channels()[0]  # Channel X
-            location_y_channel = section.get_channels()[1]  # Channel Y
-            location_z_channel = section.get_channels()[2]  # Channel Z
-
-            new_location = unreal.Vector(270,30,0)
-
-            location_x_channel.add_key(unreal.FrameNumber(0),new_location.x)
-            location_y_channel.add_key(unreal.FrameNumber(0),new_location.y)
-            location_z_channel.add_key(unreal.FrameNumber(0),new_location.z)
-
 # FIXME check for end_frame location actor spawning
-def set_location_rotation_to_element(element_binding, location:list, rotation:list,start_frame:int,end_frame:int):
+def set_location_rotation_of_element(element_binding, location:list, rotation:list, start_frame:int, end_frame:int):
     transformations = element_binding.find_tracks_by_type(unreal.MovieScene3DTransformTrack)
 
     if transformations:
@@ -139,30 +125,30 @@ def set_location_rotation_to_element(element_binding, location:list, rotation:li
 
     channels = section.get_all_channels()
 
-    start_frame = unreal.FrameNumber(start_frame)
-    end_frame = unreal.FrameNumber(end_frame)
+    start_frame_fn  = unreal.FrameNumber(start_frame)
+    end_frame_fn  = unreal.FrameNumber(end_frame)
 
     # locations (x,y,x)
-    channels[0].add_key(start_frame, location[0])
-    channels[1].add_key(start_frame, location[1])
-    channels[2].add_key(start_frame, location[2])
+    channels[0].add_key(start_frame_fn, location[0])
+    channels[1].add_key(start_frame_fn, location[1])
+    channels[2].add_key(start_frame_fn, location[2])
 
-    channels[0].add_key(end_frame, location[0])
-    channels[1].add_key(end_frame, location[1])
-    channels[2].add_key(end_frame, location[2])
+    channels[0].add_key(end_frame_fn, location[0])
+    channels[1].add_key(end_frame_fn, location[1])
+    channels[2].add_key(end_frame_fn, location[2])
 
     # rotations
-    channels[3].add_key(start_frame, rotation[0])
-    channels[4].add_key(start_frame, rotation[1])
-    channels[5].add_key(start_frame, rotation[2])
+    channels[3].add_key(start_frame_fn, rotation[0])
+    channels[4].add_key(start_frame_fn, rotation[1])
+    channels[5].add_key(start_frame_fn, rotation[2])
 
-    channels[3].add_key(end_frame, rotation[0])
-    channels[4].add_key(end_frame, rotation[1])
-    channels[5].add_key(end_frame, rotation[2])
+    channels[3].add_key(end_frame_fn, rotation[0])
+    channels[4].add_key(end_frame_fn, rotation[1])
+    channels[5].add_key(end_frame_fn, rotation[2])
 
     print("Location and rotation have been set!")
 
-# TODO add aspect ratio and fov settings
+# TODO add aspect ratio and fov settings?
 def add_camera_into_sequencer(level_sequence, location:list, rotation:list):
     if len(location) != 3 or len(rotation) != 3:
         raise TypeError("Expected 3 values for location and rotation lists")
@@ -174,9 +160,74 @@ def add_camera_into_sequencer(level_sequence, location:list, rotation:list):
     start_frame = level_sequence.get_playback_start()
     end_frame = level_sequence.get_playback_end()
 
-    set_location_rotation_to_element(spawnable_camera_binding, location, rotation, start_frame, end_frame)
+    set_location_rotation_of_element(spawnable_camera_binding, location, rotation, start_frame, end_frame)
 
     return spawnable_camera_binding
+
+def set_property_camera(level_sequence, camera_settings:dict,start_frame:int, end_frame:int):
+
+    binding = level_sequence.find_binding_by_name("CameraComponent")
+
+    tracks = binding.find_tracks_by_type(unreal.MovieSceneFloatTrack)
+
+    for setting_name,setting_value in camera_settings.items():
+        track = get_or_create_float_track(binding,tracks, setting_name, setting_name)
+        sections = track.get_sections()
+        if sections:
+            section = sections[0]
+        else:
+            section = track.add_section()
+
+        float_channels = section.get_all_channels()
+
+        section.set_range(start_frame, end_frame)
+
+        start_frame_fn = unreal.FrameNumber(start_frame)
+        end_frame_fn = unreal.FrameNumber(end_frame)
+
+        float_channels[0].add_key(start_frame_fn, setting_value)
+        float_channels[0].add_key(end_frame_fn, setting_value)
+
+
+
+
+# TODO to be delete
+    '''for track in tracks:
+        print(track.get_display_name())
+
+        sections = track.get_sections()
+        if sections:
+            section = sections[0]
+            print(section)
+            float_channels = section.get_all_channels()
+            print("canali float: ", len(float_channels))
+            print("canale: ", float_channels)
+            float_channels[0].add_key(unreal.FrameNumber(0),100)
+
+            for channel in float_channels:
+                value = "Field Of View"
+                if channel.get_name() == value:
+                    print("Trovato con nome ",value)
+                    break
+                value = "FieldOfView"
+                if channel.get_name() == value:
+                    print("Trovato con nome ",value)
+                    break'''
+
+
+def get_or_create_float_track(camera_component_binding, tracks, property_name, property_path):
+    float_track = None
+    for track in tracks:
+        if str(track.get_property_name()) == property_name:
+            print("trovato: ", property_name)
+            return track
+
+    if not float_track:
+        float_track = camera_component_binding.add_track(unreal.MovieSceneFloatTrack)
+        float_track.set_property_name_and_path(property_name, property_path)
+        print("creato: ", property_name)
+
+    return float_track
 
 
 def add_cut_camera_into_sequencer(level_sequence, camera_binding):
@@ -318,9 +369,10 @@ if __name__ == "__main__":
 
     #set_spawnable_actor_location(find_spawnable_bindings_by_substring(ls, "BP_Bryan")[0])
 
-
-    camera_binding = add_camera_into_sequencer(ls,[270, 90, 148],[0, 0, -90])
+    camera_binding = add_camera_into_sequencer(ls,[241, 90, 148],[0, 0, -90])
+    set_property_camera(ls, camera_settings,0,380)
     add_cut_camera_into_sequencer(ls,camera_binding)
+
 
     #add_audio_track_into_sequencer(ls,get_audio_asset("1001_DFA_HAP_XX"))
 
