@@ -141,6 +141,7 @@ def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
     print("Bake executed successfully!")
 
 # TODO could be improved giving animation sequence instead filename?
+#WARNING: Metahumans into level sequence must be only ONE!
 def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
     binding = level_sequence.find_binding_by_name("Face")
 
@@ -168,7 +169,14 @@ def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
 
     print("Attached animation sequence to face done successfully!")
 
+def get_csv_file_list(directory:str):
+    results = []
 
+    for filename in os.listdir(directory):
+        if filename.lower().endswith(".csv"):
+            results.append(filename)
+
+    return results
 
 def find_binding(level_sequence):
     binding = level_sequence.find_binding_by_name("Body")
@@ -178,6 +186,8 @@ if __name__ == '__main__':
     start = time.time()
 
     ls = load_level_sequence("SeqVM")
+
+    #print(get_csv_list(CSV_PATH))
 
     #attach_anim_sequence_to_face(ls,"NewLipSync")
 
