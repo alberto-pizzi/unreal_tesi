@@ -1,6 +1,13 @@
 import unreal
 import time
 
+# WARNING: insert keyframes and bake animation first (for playback times)
+
+#TODO edit paths
+
+INPUT_AUDIO_PATH = "C:/Users/alber/PycharmProjects/PythonProject1/input_audio_files/"
+AUDIO_ASSETS_PATH = "/Game/AudioAssetImported/"
+
 MH_BASE_PATH = "/Game/MetaHumans/"
 LS_BASE_PATH = "/Game/LevelSequences/"
 LS_PATH_TMP = "/Game/" #TODO to be delete
@@ -57,9 +64,13 @@ def add_spawnable_actor_into_ls(level_sequence, actor_class):
     else:
         print("Level sequence or actor class not found or nor loaded.")
 
-def load_level_sequence(seq_filename:str):
+def get_ls_path(seq_filename:str):
     full_path = LS_PATH_TMP + seq_filename + "." + seq_filename
-    level_sequence = unreal.load_asset(full_path)
+    return full_path
+
+
+def load_level_sequence(seq_filename:str):
+    level_sequence = unreal.load_asset(get_ls_path(seq_filename))
     return level_sequence
 
 def get_mh_base_path(mh_name:str):
@@ -229,6 +240,47 @@ def despawn_camera_actor(actor_camera_obj):
 def visible(actor_obj,is_visible):
     actor_obj.set_is_temporarily_hidden_in_editor(not is_visible)
 
+def get_audio_asset_path(asset_filename:str):
+    full_path = AUDIO_ASSETS_PATH + asset_filename + "." + asset_filename
+    return full_path
+
+def add_audio_track_into_sequencer(level_sequence,audio_asset):
+    audio_track = level_sequence.add_track(unreal.MovieSceneAudioTrack)
+    start_frame = level_sequence.get_playback_start()
+    end_frame = level_sequence.get_playback_end()
+    audio_section = audio_track.add_section()
+    audio_section.set_sound(audio_asset)
+
+    audio_section.set_range(start_frame, end_frame)
+
+    #unreal.EditorAssetLibrary.save_asset(level_sequence.get_path_name())
+
+
+def get_audio_asset(asset_filename: str):
+    audio_asset = unreal.EditorAssetLibrary.load_asset(get_audio_asset_path(asset_filename))
+    if not audio_asset:
+        unreal.log_warning(f"Asset not found: {asset_filename}")
+        return None
+    return audio_asset
+
+
+def import_audio_as_asset(audio_filename: str):
+    wav_file_path = INPUT_AUDIO_PATH + audio_filename
+
+    task = unreal.AssetImportTask()
+    task.filename = wav_file_path
+    task.destination_path = AUDIO_ASSETS_PATH
+    task.automated = True
+    task.save = True
+    task.replace_existing = True
+
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
+    if task.imported_object_paths:
+        unreal.log("Audio import done! Asset created: {}".format(task.imported_object_paths[0]))
+    else:
+        unreal.log_warning("Audio import failed!")
+
 
 if __name__ == "__main__":
     print("Inizio Main!")
@@ -245,15 +297,21 @@ if __name__ == "__main__":
     actor = spawn_metahuman("Bernice")
     ls = create_level_sequence(sequence_filename)
     '''
-    ls = load_level_sequence("NewLevelSequence")
+    ls = load_level_sequence("SeqVM")
     print(ls)
-    mh_class = load_actor_class("Bryan")
-    print(mh_class)
+
+    #mh_class = load_actor_class("Bryan")
+    #print(mh_class)
+
     #add_spawnable_actor_into_ls(ls,mh_class)
 
     #set_spawnable_actor_location(find_spawnable_bindings_by_substring(ls, "BP_Bryan")[0])
-    camera_binding = add_camera_into_sequencer(ls,[270, 90, 148],[0, 0, -90])
-    add_cut_camera_into_sequencer(ls,camera_binding)
+
+
+    #amera_binding = add_camera_into_sequencer(ls,[270, 90, 148],[0, 0, -90])
+    #add_cut_camera_into_sequencer(ls,camera_binding)
+
+    add_audio_track_into_sequencer(ls,get_audio_asset("1001_DFA_HAP_XX"))
 
     unreal.LevelSequenceEditorBlueprintLibrary.refresh_current_level_sequence()
 
