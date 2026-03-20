@@ -344,6 +344,16 @@ def import_audio_as_asset(audio_filename: str):
         unreal.log_warning("Audio import failed!")
 
 
+def remove_face_control_rig_track(level_sequence):
+    binding = level_sequence.find_binding_by_name("Face")
+
+    tracks = binding.find_tracks_by_type(unreal.MovieSceneControlRigParameterTrack)
+
+    for track in tracks:
+        binding.remove_track(track)
+
+
+
 if __name__ == "__main__":
     print("Inizio Main!")
     ''' 
@@ -359,19 +369,20 @@ if __name__ == "__main__":
     actor = spawn_metahuman("Bernice")
     ls = create_level_sequence(sequence_filename)
     '''
-    ls = load_level_sequence("SeqVM")
+    #ls = load_level_sequence("SeqVM")
+    ls = load_level_sequence("ProvaBatch")
     print(ls)
 
     #mh_class = load_actor_class("Bryan")
     #print(mh_class)
 
-    #add_spawnable_actor_into_ls(ls,mh_class)
-
+    #stampa_tutto(ls)
+    remove_face_control_rig_track(ls)
     #set_spawnable_actor_location(find_spawnable_bindings_by_substring(ls, "BP_Bryan")[0])
 
-    camera_binding = add_camera_into_sequencer(ls,[241, 90, 148],[0, 0, -90])
-    set_property_camera(ls, camera_settings,0,380)
-    add_cut_camera_into_sequencer(ls,camera_binding)
+    #camera_binding = add_camera_into_sequencer(ls,[241, 90, 148],[0, 0, -90])
+    #set_property_camera(ls, camera_settings,0,380)
+    #add_cut_camera_into_sequencer(ls,camera_binding)
 
 
     #add_audio_track_into_sequencer(ls,get_audio_asset("1001_DFA_HAP_XX"))
