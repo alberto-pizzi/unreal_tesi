@@ -17,7 +17,7 @@ OUTPUT_DIR = BASE_DIR / OUTPUT_FOLDER
 CONFIG_YAML = CLIENT_DIR / "config" / "config_mark.yml"  # file YAM (mark) with emotions
 
 
-
+# WARNING: this is a batch function
 def batch_a2f_csv():
     OUTPUT_DIR.mkdir(exist_ok=True)
     # find all WAV files
