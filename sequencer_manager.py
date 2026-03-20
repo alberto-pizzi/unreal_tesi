@@ -23,6 +23,7 @@ def create_level_sequence(ls_name):
     return ls
 
 # TODO to be finish (maybe it will not be used)
+'''
 def mrq_export_ls_to_video(ls_filename):
     # Carica il MoviePipelineQueueSubsystem per accedere alla coda render
     mrq_subsystem = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)
@@ -55,14 +56,18 @@ def mrq_export_ls_to_video(ls_filename):
     # Imposta formato di output nativo MP4 con codec H.264
     video_setting.video_codec = unreal.SimpleVideoCodec.H264
     video_setting.output_file_extension = "mp4"
+'''
 
 def add_spawnable_actor_into_ls(level_sequence, actor_class):
+    spawnable_binding = None
     if level_sequence and actor_class:
         ls_subsystem = unreal.get_editor_subsystem(unreal.LevelSequenceEditorSubsystem)
         spawnable_binding = ls_subsystem.add_spawnable_from_class(level_sequence,actor_class)
         print("Spawnable Metahuman added:", spawnable_binding)
     else:
         print("Level sequence or actor class not found or nor loaded.")
+
+    return spawnable_binding
 
 def get_ls_path(seq_filename:str):
     full_path = LS_PATH_TMP + seq_filename + "." + seq_filename
@@ -115,6 +120,47 @@ def set_spawnable_actor_location(binding_actor):
             location_y_channel.add_key(unreal.FrameNumber(0),new_location.y)
             location_z_channel.add_key(unreal.FrameNumber(0),new_location.z)
 
+# FIXME check for end_frame location actor spawning
+def set_location_rotation_to_element(element_binding, location:list, rotation:list,start_frame:int,end_frame:int):
+    transformations = element_binding.find_tracks_by_type(unreal.MovieScene3DTransformTrack)
+
+    if transformations:
+        transform_track = transformations[0]
+    else:
+        transform_track = element_binding.add_track(unreal.MovieScene3DTransformTrack)
+
+    sections = transform_track.get_sections()
+    if sections:
+        section = sections[0]
+    else:
+        section = transform_track.add_section()
+
+    section.set_range(start_frame, end_frame)
+
+    channels = section.get_all_channels()
+
+    start_frame = unreal.FrameNumber(start_frame)
+    end_frame = unreal.FrameNumber(end_frame)
+
+    # locations (x,y,x)
+    channels[0].add_key(start_frame, location[0])
+    channels[1].add_key(start_frame, location[1])
+    channels[2].add_key(start_frame, location[2])
+
+    channels[0].add_key(end_frame, location[0])
+    channels[1].add_key(end_frame, location[1])
+    channels[2].add_key(end_frame, location[2])
+
+    # rotations
+    channels[3].add_key(start_frame, rotation[0])
+    channels[4].add_key(start_frame, rotation[1])
+    channels[5].add_key(start_frame, rotation[2])
+
+    channels[3].add_key(end_frame, rotation[0])
+    channels[4].add_key(end_frame, rotation[1])
+    channels[5].add_key(end_frame, rotation[2])
+
+    print("Location and rotation have been set!")
 
 # TODO add aspect ratio and fov settings
 def add_camera_into_sequencer(level_sequence, location:list, rotation:list):
@@ -125,46 +171,11 @@ def add_camera_into_sequencer(level_sequence, location:list, rotation:list):
 
     spawnable_camera_binding = ls_system.add_spawnable_from_class(level_sequence,unreal.CameraActor)
 
-    start_frame = unreal.FrameNumber(level_sequence.get_playback_start())
-    end_frame = unreal.FrameNumber(level_sequence.get_playback_end())
+    start_frame = level_sequence.get_playback_start()
+    end_frame = level_sequence.get_playback_end()
 
-    transformations = spawnable_camera_binding.find_tracks_by_type(unreal.MovieScene3DTransformTrack)
+    set_location_rotation_to_element(spawnable_camera_binding, location, rotation, start_frame, end_frame)
 
-    if transformations:
-        transform_track = transformations[0]
-    else:
-        transform_track = spawnable_camera_binding.add_track(unreal.MovieScene3DTransformTrack)
-
-    sections = transform_track.get_sections()
-    if sections:
-        section = sections[0]
-    else:
-        section = transform_track.add_section()
-
-    section.set_range(level_sequence.get_playback_start(), level_sequence.get_playback_end())
-
-    channels = section.get_all_channels()
-
-
-    # locations (x,y,x)
-    channels[0].add_key(start_frame,location[0])
-    channels[1].add_key(start_frame,location[1])
-    channels[2].add_key(start_frame,location[2])
-
-    channels[0].add_key(end_frame,location[0])
-    channels[1].add_key(end_frame,location[1])
-    channels[2].add_key(end_frame,location[2])
-
-    #rotations
-    channels[3].add_key(start_frame, rotation[0])
-    channels[4].add_key(start_frame, rotation[1])
-    channels[5].add_key(start_frame,rotation[2])
-
-    channels[3].add_key(end_frame, rotation[0])
-    channels[4].add_key(end_frame, rotation[1])
-    channels[5].add_key(end_frame,rotation[2])
-
-    print("Actor Camera Track has been set!")
     return spawnable_camera_binding
 
 
@@ -308,10 +319,10 @@ if __name__ == "__main__":
     #set_spawnable_actor_location(find_spawnable_bindings_by_substring(ls, "BP_Bryan")[0])
 
 
-    #amera_binding = add_camera_into_sequencer(ls,[270, 90, 148],[0, 0, -90])
-    #add_cut_camera_into_sequencer(ls,camera_binding)
+    camera_binding = add_camera_into_sequencer(ls,[270, 90, 148],[0, 0, -90])
+    add_cut_camera_into_sequencer(ls,camera_binding)
 
-    add_audio_track_into_sequencer(ls,get_audio_asset("1001_DFA_HAP_XX"))
+    #add_audio_track_into_sequencer(ls,get_audio_asset("1001_DFA_HAP_XX"))
 
     unreal.LevelSequenceEditorBlueprintLibrary.refresh_current_level_sequence()
 
