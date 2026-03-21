@@ -63,11 +63,11 @@ A2F_TO_METAHUMAN = {
 
 # SMILE / FROWN
 
-"MouthSmileLeft": ["CTRL_L_mouth_cornerPull"],
-"MouthSmileRight": ["CTRL_R_mouth_cornerPull"],
+"MouthSmileLeft": ["CTRL_L_mouth_corner"],
+"MouthSmileRight": ["CTRL_R_mouth_corner"],
 
-"MouthFrownLeft": ["CTRL_L_mouth_cornerDepress"],
-"MouthFrownRight": ["CTRL_R_mouth_cornerDepress"],
+"MouthFrownLeft": ["CTRL_L_mouth_corner"],
+"MouthFrownRight": ["CTRL_R_mouth_corner"],
 
 # DIMPLER / STRETCH
 
@@ -135,12 +135,10 @@ A2F_TO_METAHUMAN = {
 
 "NoseSneerLeft": [
     "CTRL_L_nose",
-    "CTRL_L_nose_wrinkleUpper"
 ],
 
 "NoseSneerRight": [
     "CTRL_R_nose",
-    "CTRL_R_nose_wrinkleUpper"
 ],
 
 # TONGUE
@@ -164,8 +162,8 @@ A2F_TO_METAHUMAN = {
 
 # HEAD
 
-"HeadYaw": ["mha_head_ik_ctrl"],
-"HeadPitch": ["mha_head_ik_ctrl"],
-"HeadRoll": ["mha_head_ik_ctrl"],
+#"HeadYaw": ["mha_head_ik_ctrl"],
+#"HeadPitch": ["mha_head_ik_ctrl"],
+#"HeadRoll": ["mha_head_ik_ctrl"],
 
 }
