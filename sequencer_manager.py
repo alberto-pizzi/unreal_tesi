@@ -10,6 +10,8 @@ from pathlib import Path
 
 AUDIO_ASSETS_PATH = "/Game/AudioAssetImported/"
 
+ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"
+
 MH_BASE_PATH = "/Game/MetaHumans/"
 LS_BASE_PATH = "/Game/LevelSequences/"
 LS_PATH_TMP = "/Game/" #TODO to be delete
@@ -360,6 +362,62 @@ def remove_face_control_rig_track(level_sequence):
         binding.remove_track(track)
 
 
+def add_possessable_actor_into_ls(actor_obj):
+    ls_system = unreal.get_editor_subsystem(unreal.LevelSequenceEditorSubsystem)
+    bindings = ls_system.add_actors([actor_obj])
+
+    print("Added possessable actor into sequencer!")
+
+
+# Only for possessable actors as input
+def calculate_camera_pos(actor_obj):
+    skeletal = actor_obj.get_component_by_class(unreal.SkeletalMeshComponent)
+    head_transform = skeletal.get_socket_transform("head", unreal.RelativeTransformSpace.RTS_WORLD)
+    head_location = head_transform.translation
+    offset = unreal.Vector(0, 40, 4)
+    camera_location = head_location + offset
+    rotation = unreal.Rotator(0.0, 0.0, -90.0)
+
+    location_list = [camera_location.x,camera_location.y,camera_location.z]
+    rotation_list = [rotation.roll, rotation.pitch, rotation.yaw]
+
+    return location_list, rotation_list
+
+def load_anim_sequence(anim_seq_filename:str):
+    full_path = ANIMATION_PATH + anim_seq_filename + "." + anim_seq_filename
+    anim_sequence = unreal.load_asset(full_path)
+    return anim_sequence
+
+# TODO could be improved giving animation sequence instead filename?
+#WARNING: Metahumans into level sequence must be only ONE!
+def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
+    binding = level_sequence.find_binding_by_name("Face")
+
+    anim_sequence = load_anim_sequence(anim_seq_filename)
+
+    animation_length_seconds = anim_sequence.get_play_length()
+
+    frame_rate = level_sequence.get_display_rate()
+    fps = frame_rate.numerator / frame_rate.denominator
+
+    animation_length_frames = int(animation_length_seconds * fps)
+
+    # FIXME is correct pos?
+    '''
+    level_sequence.set_playback_start(0)
+    level_sequence.set_playback_end(animation_length_frames)'''
+
+    anim_track = binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
+    anim_section = anim_track.add_section()
+    anim_section.set_range(0, animation_length_frames)
+    anim_section.params.animation = anim_sequence
+
+    unreal.LevelSequenceEditorBlueprintLibrary.refresh_current_level_sequence()
+    unreal.EditorAssetLibrary.save_asset(level_sequence.get_path_name())
+
+    print("Attached animation sequence to face done successfully!")
+
+
 
 if __name__ == "__main__":
     print("Inizio Main!")
@@ -377,14 +435,34 @@ if __name__ == "__main__":
     ls = create_level_sequence(sequence_filename)
     '''
     #ls = load_level_sequence("SeqVM")
-    ls = load_level_sequence("ProvaBatch")
+    ls = load_level_sequence("SeqVM")
     print(ls)
 
     #mh_class = load_actor_class("Bryan")
     #print(mh_class)
 
-    #stampa_tutto(ls)
+    #ottieni_pos_rig(ls)
+    '''    
+    actor_obj = spawn_metahuman("Bernice")
+    add_possessable_actor_into_ls(ls,actor_obj)
+    location, rotation = calculate_camera_pos(actor_obj)
+    camera_binding = add_camera_into_sequencer(ls,location,rotation)
+    add_cut_camera_into_sequencer(ls,camera_binding)
+
+    attach_anim_sequence_to_face(ls,"VMRig")
+
+    add_audio_track_into_sequencer(ls, get_audio_asset("out"))
+
     remove_face_control_rig_track(ls)
+    '''
+
+
+
+
+
+
+    #stampa_tutto(ls)
+    #remove_face_control_rig_track(ls)
     #set_spawnable_actor_location(find_spawnable_bindings_by_substring(ls, "BP_Bryan")[0])
 
     #camera_binding = add_camera_into_sequencer(ls,[241, 90, 148],[0, 0, -90])

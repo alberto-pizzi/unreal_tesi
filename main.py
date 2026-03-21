@@ -57,7 +57,7 @@ if __name__ == "__main__":
             anim_creator.bake_to_animation_sequence(ls,animation_sequence_filename) # FIXME choose filename
             #sequencer_manager.set_location_rotation_of_element(mh_binding,[0,0,0],[0,0,0],)
 
-            anim_creator.attach_anim_sequence_to_face(ls,animation_sequence_filename)
+            sequencer_manager.attach_anim_sequence_to_face(ls,animation_sequence_filename)
             sequencer_manager.remove_face_control_rig_track(ls)
 
             # TODO to be finish

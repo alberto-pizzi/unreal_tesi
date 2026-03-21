@@ -33,10 +33,6 @@ def load_level_sequence(seq_filename:str):
     level_sequence = unreal.load_asset(full_path)
     return level_sequence
 
-def load_anim_sequence(anim_seq_filename:str):
-    full_path = ANIMATION_PATH + anim_seq_filename + "." + anim_seq_filename
-    anim_sequence = unreal.load_asset(full_path)
-    return anim_sequence
 
 def read_csv(filename):
 
@@ -140,34 +136,6 @@ def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
 
     print("Bake executed successfully!")
 
-# TODO could be improved giving animation sequence instead filename?
-#WARNING: Metahumans into level sequence must be only ONE!
-def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
-    binding = level_sequence.find_binding_by_name("Face")
-
-    anim_sequence = load_anim_sequence(anim_seq_filename)
-
-    animation_length_seconds = anim_sequence.get_play_length()
-
-    frame_rate = level_sequence.get_display_rate()
-    fps = frame_rate.numerator / frame_rate.denominator
-
-    animation_length_frames = int(animation_length_seconds * fps)
-
-    # FIXME is correct pos?
-    '''
-    level_sequence.set_playback_start(0)
-    level_sequence.set_playback_end(animation_length_frames)'''
-
-    anim_track = binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
-    anim_section = anim_track.add_section()
-    anim_section.set_range(0, animation_length_frames)
-    anim_section.params.animation = anim_sequence
-
-    unreal.LevelSequenceEditorBlueprintLibrary.refresh_current_level_sequence()
-    unreal.EditorAssetLibrary.save_asset(level_sequence.get_path_name())
-
-    print("Attached animation sequence to face done successfully!")
 
 def get_csv_file_list(directory:str):
     results = []
@@ -193,9 +161,9 @@ if __name__ == '__main__':
 
     #get_all_binding(ls)
     #find_binding(ls)
-    #rows, arkit_csv_names = read_csv("animation_frames.csv")
-    #insert_keyframes(ls,rows)
-    #bake_to_animation_sequence(ls,"VMRig")
+    rows, arkit_csv_names = read_csv("animation_frames.csv")
+    insert_keyframes(ls,rows)
+    bake_to_animation_sequence(ls,"VMRigPossessable")
     #import_audio_as_asset("1001_DFA_HAP_XX.wav")
 
 
