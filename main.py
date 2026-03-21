@@ -12,8 +12,12 @@ METAHUMANS_INSTALLED = [
 
 ]
 
+# TODO paths to be set
+INPUT_AUDIO_PATH = "C:/Users/alber/PycharmProjects/PythonProject1/input_audio_files/"
+
+
 # it scans directories and subdirectories, return a list of Path
-def collect_filenames_path_by_extension(directory: str, extension: str) -> list[Path]:
+def collect_filename_paths_by_extension(directory: str, extension: str) -> list[Path]:
     extension = extension.lower()
     path = Path(directory)
 
@@ -30,21 +34,27 @@ if __name__ == "__main__":
     csv_files = anim_creator.get_csv_file_list(anim_creator.CSV_PATH) #TODO replace with collect_filenames_path_by_extension?
 
     #import audio as assets
-    #audio_file_paths = collect_filenames_path_by_extension()
+    audio_file_paths = collect_filename_paths_by_extension(INPUT_AUDIO_PATH, ".wav")
+    sequencer_manager.import_audio_as_assets(audio_file_paths)
+
+
 
 
     for mh_name in METAHUMANS_INSTALLED:
         mh_class = sequencer_manager.load_actor_class(mh_name)
 
+        c = 0
         for csv_file in csv_files:
+            c = c + 1
             rows, arkit_csv_names = anim_creator.read_csv(csv_file)
 
-            ls = sequencer_manager.create_level_sequence(mh_name)  # to be fixed
+            ls = sequencer_manager.create_level_sequence(mh_name+"_"+c)  # FIXME name to be fixed
+
+            mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
 
             anim_creator.insert_keyframes(ls, rows)
             animation_sequence_filename = mh_name+"_"+os.path.splitext(csv_file)[0]+"_baked"
             anim_creator.bake_to_animation_sequence(ls,animation_sequence_filename) # FIXME choose filename
-            mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
             #sequencer_manager.set_location_rotation_of_element(mh_binding,[0,0,0],[0,0,0],)
 
             anim_creator.attach_anim_sequence_to_face(ls,animation_sequence_filename)
@@ -55,8 +65,11 @@ if __name__ == "__main__":
 
 
 
+
             #save
             unreal.EditorAssetLibrary.save_loaded_asset(ls)
+            
+
 
 
 

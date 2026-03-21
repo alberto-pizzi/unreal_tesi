@@ -70,7 +70,7 @@ def map_blendshapes(csv_names,map):
     print("Mapping completed!")
     return morphs_mh
 
-# insert keyframes
+# IMPORTANT: insert keyframes into actor face control rigs
 def insert_keyframes(level_sequence,weights_read_from_csv):
     rig_proxies = unreal.ControlRigSequencerLibrary.get_control_rigs(level_sequence)
 

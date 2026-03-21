@@ -3,10 +3,11 @@ import time
 from pathlib import Path
 
 # WARNING: insert keyframes and bake animation first (for playback times)
+# IMPORTANT :Unreal accepts ONLY paths UNIX-like
+
 
 #TODO edit paths
 
-INPUT_AUDIO_PATH = "C:/Users/alber/PycharmProjects/PythonProject1/input_audio_files/"
 AUDIO_ASSETS_PATH = "/Game/AudioAssetImported/"
 
 MH_BASE_PATH = "/Game/MetaHumans/"
@@ -327,13 +328,13 @@ def get_audio_asset(asset_filename: str):
     return audio_asset
 
 
-def import_audio_assets(audio_filenames: list[str]):
-    for filename in audio_filenames:
+def import_audio_as_assets(audio_filename_paths: list[Path]):
+    for filename in audio_filename_paths:
         import_audio_as_asset(filename)
 
-def import_audio_as_asset(audio_filename: str):
-    audio_filename = Path(audio_filename).stem
-    wav_file_path = INPUT_AUDIO_PATH + audio_filename
+def import_audio_as_asset(audio_filename_path: Path):
+    # IMPORTANT :Unreal accepts ONLY paths unix-like
+    wav_file_path = audio_filename_path.as_posix()
 
     task = unreal.AssetImportTask()
     task.filename = wav_file_path
