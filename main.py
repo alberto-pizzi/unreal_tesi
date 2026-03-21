@@ -3,23 +3,34 @@ import os.path
 import unreal
 import sequencer_manager
 import csv_to_face_animation as anim_creator
-from csv_to_face_animation import attach_anim_sequence_to_face
+from pathlib import Path
 
+
+# TODO to be completed
 METAHUMANS_INSTALLED = [
     "Bryan",
 
 ]
 
+# it scans directories and subdirectories, return a list of Path
+def collect_filenames_path_by_extension(directory: str, extension: str) -> list[Path]:
+    extension = extension.lower()
+    path = Path(directory)
+
+    if not path.is_dir():
+        raise ValueError(f"Directory not valid: {directory}")
+
+    file_list = [p for p in path.rglob(f"*{extension}") if p.is_file()]
+    return file_list
 
 
 if __name__ == "__main__":
 
     # returns csv file list with extension ".csv" with directory as input
-    csv_files = anim_creator.get_csv_file_list(anim_creator.CSV_PATH)
+    csv_files = anim_creator.get_csv_file_list(anim_creator.CSV_PATH) #TODO replace with collect_filenames_path_by_extension?
 
-
-
-
+    #import audio as assets
+    #audio_file_paths = collect_filenames_path_by_extension()
 
 
     for mh_name in METAHUMANS_INSTALLED:
@@ -40,7 +51,6 @@ if __name__ == "__main__":
             sequencer_manager.remove_face_control_rig_track(ls)
 
             # TODO to be finish
-
 
 
 

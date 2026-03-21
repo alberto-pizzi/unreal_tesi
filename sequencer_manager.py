@@ -1,5 +1,6 @@
 import unreal
 import time
+from pathlib import Path
 
 # WARNING: insert keyframes and bake animation first (for playback times)
 
@@ -326,7 +327,12 @@ def get_audio_asset(asset_filename: str):
     return audio_asset
 
 
+def import_audio_assets(audio_filenames: list[str]):
+    for filename in audio_filenames:
+        import_audio_as_asset(filename)
+
 def import_audio_as_asset(audio_filename: str):
+    audio_filename = Path(audio_filename).stem
     wav_file_path = INPUT_AUDIO_PATH + audio_filename
 
     task = unreal.AssetImportTask()
