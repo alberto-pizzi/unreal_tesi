@@ -274,6 +274,10 @@ def despawn_metahuman(actor_obj):
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     return actor_subsystem.destroy_actor(actor_obj)
 
+def despawn_metahumans(actor_objs):
+    for actor_obj in actor_objs:
+        despawn_metahuman(actor_obj)
+
 def spawn_camera_actor(actor_obj):
     actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     camera_class = unreal.CameraActor.static_class()
@@ -417,6 +421,17 @@ def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
 
     print("Attached animation sequence to face done successfully!")
 
+def clear_sequencer(level_sequence):
+
+    bindings = level_sequence.get_bindings()
+    tracks = level_sequence.get_tracks()
+
+    for binding in bindings:
+        binding.remove()
+
+    for track in tracks:
+        level_sequence.remove_track(track)
+
 
 
 if __name__ == "__main__":
@@ -442,19 +457,28 @@ if __name__ == "__main__":
     #print(mh_class)
 
     #ottieni_pos_rig(ls)
-    '''    
-    actor_obj = spawn_metahuman("Bernice")
-    add_possessable_actor_into_ls(ls,actor_obj)
+    '''  
+    actor_obj = spawn_metahuman("Bryan")
+    add_possessable_actor_into_ls(actor_obj)
+
+    clear_sequencer(ls)
+
+    despawn_metahumans([actor_obj])
+
+      
+    actor_obj = spawn_metahuman("Bryan")
+    add_possessable_actor_into_ls(actor_obj)
     location, rotation = calculate_camera_pos(actor_obj)
     camera_binding = add_camera_into_sequencer(ls,location,rotation)
     add_cut_camera_into_sequencer(ls,camera_binding)
 
-    attach_anim_sequence_to_face(ls,"VMRig")
+    attach_anim_sequence_to_face(ls,"NewFluidAnimation")
 
     add_audio_track_into_sequencer(ls, get_audio_asset("out"))
 
     remove_face_control_rig_track(ls)
     '''
+
 
 
 
