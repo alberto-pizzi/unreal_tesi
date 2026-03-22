@@ -4,7 +4,7 @@
 
 
 >  [!CAUTION]
-> Be carefull. Not all files are ready-to-use at now...
+> Be carefull. Not all files are "ready-to-use" at now...
 > 
 # Development of a processing pipeline to simulate neuromorphic event streams and train neural networks for emotion recognition via animated humanoids.
 
@@ -69,6 +69,6 @@ This pipeline is thinked to executend into 3 step (or 2: step 1 and 2 can be mer
 - Unreal library for Python (settable as *python stub*)
 - [A2F Python Client](https://build.nvidia.com/nvidia/audio2face-3d/api)
 - [NVIDIA Audio2Face API](https://build.nvidia.com/nvidia/audio2face-3d) access.
-- [Frames2Ev](https://github.com/MagriniGabriele/Frames2Ev) by *Gabriele Magrini*, to generate frames
+- [Frames2Ev](https://github.com/MagriniGabriele/Frames2Ev) by *Gabriele Magrini*, to generate event-frames from video
 - [rpg_vid2e](https://github.com/uzh-rpg/rpg_vid2e), for Frames2Ev.
 - ...
