@@ -9,7 +9,7 @@ sys.path.append(current_dir)
 import unreal
 import csv
 import time
-from a2f_rig_maps import A2F_TO_METAHUMAN
+from a2f_involved_rig_maps import A2F_TO_METAHUMAN
 import contro_rig_processing as crp
 #import control_rig_maps as crm
 

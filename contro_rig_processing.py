@@ -1,6 +1,6 @@
 
 import control_rig_maps as crm
-import a2f_rig_maps as a2f_map
+import a2f_involved_rig_maps as a2f_map
 
 # it is an init function (valid for all iterations)
 def create_rig_class_instances():

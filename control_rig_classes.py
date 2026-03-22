@@ -1,6 +1,6 @@
 from enum import Enum
 
-from a2f_rig_maps import A2F_TO_METAHUMAN
+from a2f_involved_rig_maps import A2F_TO_METAHUMAN
 
 
 def theshold_boosts(x,low_threshold:float, high_threshold:float,base:float):
