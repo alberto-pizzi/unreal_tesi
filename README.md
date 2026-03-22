@@ -13,7 +13,7 @@
 - [CREMA-D](https://github.com/CheyneyComputerScience/CREMA-D)
 - [RAVDESS](https://zenodo.org/records/1188976)
 
-## Pipieline structure
+## Pipeline structure
 
 1. Take an **audio dataset** (for example .wav) with each track **labeled**.
 2. Batch call **NVIDIA Audio2Face API** from Python script to get its corrisponding CSV file. It will contain all **ARKit blendshapes** for each frame generated from an input audio at 30 FPS.
