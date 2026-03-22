@@ -12,6 +12,10 @@ RIG_OVERRIDES = {
     "CTRL_C_tongue_inOut": crc.TongueInOutCR,
     "CTRL_C_tongue_move": crc.TongueMoveCR,
     "CTRL_C_tongue_wideNarrow": crc.TongueWideNarrowCR,
+    "CTRL_L_eye_faceScrunch": crc.FaceScrunchLeftCR,
+    "CTRL_R_eye_faceScrunch": crc.FaceScrunchRightCR,
+    "CTRL_L_eye_blink": crc.EyeBlinkLeftCR,
+    "CTRL_R_eye_blink": crc.EyeBlinkRightCR,
 
 
 

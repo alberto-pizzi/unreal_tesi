@@ -18,11 +18,13 @@ A2F_TO_METAHUMAN = {
 "EyeSquintLeft": [
     "CTRL_L_eye_squintInner",
     "CTRL_L_eye_cheekRaise"
+    "CTRL_L_eye_faceScrunch"
 ],
 
 "EyeSquintRight": [
     "CTRL_R_eye_squintInner",
     "CTRL_R_eye_cheekRaise"
+    "CTRL_R_eye_faceScrunch"
 ],
 
 "EyeWideLeft": ["CTRL_L_eye_eyelidU"],
@@ -128,8 +130,8 @@ A2F_TO_METAHUMAN = {
     "CTRL_R_mouth_suckBlow"
 ],
 
-"CheekSquintLeft": ["CTRL_L_eye_cheekRaise"],
-"CheekSquintRight": ["CTRL_R_eye_cheekRaise"],
+"CheekSquintLeft": ["CTRL_L_eye_cheekRaise", "CTRL_R_eye_faceScrunch"],
+"CheekSquintRight": ["CTRL_R_eye_cheekRaise", "CTRL_R_eye_faceScrunch"],
 
 # NOSE
 

@@ -46,13 +46,13 @@ if __name__ == "__main__":
         c = 0
         for csv_file in csv_files:
             c = c + 1
-            rows, arkit_csv_names = anim_creator.read_csv_by_row(csv_file)
+            rows, arkit_csv_names = anim_creator.read_csv_with_conversion(csv_file)
 
             ls = sequencer_manager.create_level_sequence(mh_name+"_"+c)  # FIXME name to be fixed
 
             mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
 
-            anim_creator.insert_keyframes(ls, rows)
+            anim_creator.insert_keyframes_by_row(ls, rows)
             animation_sequence_filename = mh_name+"_"+os.path.splitext(csv_file)[0]+"_baked"
             anim_creator.bake_to_animation_sequence(ls,animation_sequence_filename) # FIXME choose filename
             #sequencer_manager.set_location_rotation_of_element(mh_binding,[0,0,0],[0,0,0],)

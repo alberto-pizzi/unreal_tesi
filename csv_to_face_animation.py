@@ -43,12 +43,8 @@ def read_csv_by_row(filename):
         # remove prefix from all blendshapes
         reader.fieldnames  = [key.strip().removeprefix(CSV_PREFIX)
                              for key in reader.fieldnames]
-        #arkit_csv_names = cleaned_keys.copy()
         rows = list(reader)
 
-    #remove first element "timeCode"
-    #if arkit_csv_names and arkit_csv_names[0] == time_code_tag:
-    #    arkit_csv_names.pop(0)
 
     if not rows:
         raise RuntimeError("CSV is empty or malformed")
@@ -56,14 +52,15 @@ def read_csv_by_row(filename):
     print("CSV read successfully")
     return rows
 
-def read_csv_with_conversion(filename):
-    """
+"""
     Reads a CSV and converts values as follows:
     - First column: int
     - Other columns: float
     - Headers: strings
     Returns a list of dictionaries.
-    """
+"""
+def read_csv_with_conversion(filename):
+
     data = []
     with open(CSV_PATH + filename, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -95,44 +92,6 @@ def transpose_rows_to_columns(rows):
 
     return columns
 
-#mapping
-def map_blendshapes(csv_names,map):
-    #create list of face control rigs mapped
-    morphs_mh = []
-    for arkit_name in csv_names:
-        if arkit_name in map:
-            morph_mh = map[arkit_name]
-            morphs_mh.append(morph_mh)
-
-    print("Mapping completed!")
-    return morphs_mh
-
-
-def process_frame(frame_row, rig_instances_dict):
-    processed_frame = {}
-    already_computed = set()  # evita ricalcoli multipli per rig VEC2
-
-    for blendshape, value in frame_row.items():
-        rigs_for_blend = A2F_TO_METAHUMAN.get(blendshape, [])
-
-        for rig_name in rigs_for_blend:
-            rig = rig_instances_dict[rig_name]
-
-            if rig.type == crp.crm.crc.RigType.VEC2:
-                # VEC2: calcola una sola volta (legge tutto il frame_row internamente)
-                if rig_name not in already_computed:
-                    calc_values = rig.calculate(frame_row)
-                    processed_frame[rig_name] = unreal.Vector2D(calc_values[0], calc_values[1])
-                    already_computed.add(rig_name)
-            else:
-                # FLOAT default: usa il blendshape corrente come chiave
-                calc_values = rig.calculate(frame_row, blendshape)
-                # accumula (somma) se più blendshape mappano sullo stesso rig
-                prev = processed_frame.get(rig_name, 0.0)
-                processed_frame[rig_name] = prev + calc_values
-
-    return processed_frame
-
 
 # IMPORTANT: insert keyframes into actor face control rigs
 def insert_keyframes_by_row(level_sequence, csv_rows):
@@ -145,48 +104,76 @@ def insert_keyframes_by_row(level_sequence, csv_rows):
             print("Good to go!")
             break
 
-    #frame_array = unreal.Array(unreal.FrameNumber)
-    #[frame_array.append(unreal.FrameNumber(int(f))) for f in csv_columns['']]
+    if face_rig is None:
+        raise RuntimeError("Face_ControlBoard_CtrlRig not found into Level Sequence")
 
-    #blendshapes = list(csv_rows.keys())[2:]
+    # extract frame numbers from the first column (frames: '')
+    time_code_key = list(csv_rows[0].keys())[0]
+    frame_numbers = [row[time_code_key] for row in csv_rows]
 
     rig_instances = crp.create_rig_class_instances()
-    #print("lunghezza: ",len(rig_instances))
-    processed_frames = [process_frame(f, rig_instances) for f in rows]
-    batch_data = build_batch(processed_frames, rig_instances)
-    print("lunghezza: ", len(processed_frames))
-    print(processed_frames[:2])
-    print(processed_frames)
-    #apply_batch_to_unreal(batch_data, rig_instances, ls, face_rig)
+    batch = build_batch_by_column(csv_rows, rig_instances)
 
-def build_batch(processed_frames, rig_instances):
+    apply_batch_to_unreal(batch, rig_instances, level_sequence, face_rig, frame_numbers)
 
-    batch_data = {}
-
-    for frame_row in processed_frames:
-        for rig_name, rig in rig_instances.items():
-            value = frame_row.get(rig_name)
-
-            if value is not None:
-                batch_data[rig_name] = value
-
-    return batch_data
+    level_sequence.set_playback_start(0)
+    level_sequence.set_playback_end(frame_numbers[-1].value)
+    print("Keyframes inserted successfully!")
 
 
-def apply_batch_to_unreal(batch_data, rig_instances, level_sequence, face_rig):
-    """
-    Applica tutti i valori dei rig in batch a Unreal
-    """
+# processes all CSV rows and returns a columnar dict: rig_name: [val_frame0, val_frame1, ...]   # float o Vector2D
+def build_batch_by_column(csv_rows, rig_instances):
+    # initializes the empty list for each rig
+    batch = {rig_name: [] for rig_name in rig_instances}
+    already_seen_vec2 = set()  # to track which VEC2s have already been initialized
+
+    for frame_row in csv_rows:
+        # for each frame, we keep the values calculated in this frame
+        frame_values = {rig_name: None for rig_name in rig_instances}
+        computed_vec2 = set()
+
+        for blendshape in frame_row:
+            rigs_for_blend = A2F_TO_METAHUMAN.get(blendshape, [])
+
+            for rig_name in rigs_for_blend:
+                rig = rig_instances[rig_name]
+
+                if rig.type == crp.crm.crc.RigType.VEC2:
+                    # VEC2: Calculate only once per frame
+                    if rig_name not in computed_vec2:
+                        result = rig.calculate(frame_row)
+                        frame_values[rig_name] = unreal.Vector2D(result[0], result[1])
+                        computed_vec2.add(rig_name)
+
+                else:
+                    # FLOAT: accumulate (multiple blendshapes can contribute to the same rig)
+                    result = rig.calculate(frame_row, source_blendshape=blendshape)
+                    prev = frame_values[rig_name] or 0.0
+                    frame_values[rig_name] = prev + result
+
+        # append the values of this frame to the columns
+        for rig_name in rig_instances:
+            val = frame_values[rig_name]
+            if val is None:
+                # rig not touched in this frame will be neutral value
+                rig = rig_instances[rig_name]
+                val = unreal.Vector2D(0.0, 0.0) if rig.type == crp.crm.crc.RigType.VEC2 else 0.0
+            batch[rig_name].append(val)
+
+    return batch
+
+
+def apply_batch_to_unreal(batch, rig_instances, level_sequence, face_rig, frame_numbers):
+    # frame_numbers: list of unreal.FrameNumber, one for each CSV frame
     for rig_name, rig in rig_instances.items():
-        values = batch_data[rig_name]
-        frame_indices = list(range(len(values)))
+        values = batch[rig_name]
 
         if rig.type == crp.crm.crc.RigType.FLOAT:
             unreal.ControlRigSequencerLibrary.set_local_control_rig_floats(
                 level_sequence,
                 face_rig,
                 unreal.Name(rig_name),
-                frame_indices,
+                frame_numbers,
                 values
             )
         elif rig.type == crp.crm.crc.RigType.VEC2:
@@ -194,77 +181,12 @@ def apply_batch_to_unreal(batch_data, rig_instances, level_sequence, face_rig):
                 level_sequence,
                 face_rig,
                 unreal.Name(rig_name),
-                frame_indices,
+                frame_numbers,
                 values
             )
 
 
-# IMPORTANT: insert keyframes into actor face control rigs
-def insert_keyframes(level_sequence, csv_columns):
-    rig_proxies = unreal.ControlRigSequencerLibrary.get_control_rigs(level_sequence)
 
-    face_rig = None
-    for proxy in rig_proxies:
-        if proxy.control_rig.get_name() == 'Face_ControlBoard_CtrlRig':
-            face_rig = proxy.control_rig
-            print("Good to go!")
-            break
-
-    #frame_array = unreal.Array(unreal.FrameNumber)
-    #[frame_array.append(unreal.FrameNumber(int(f))) for f in csv_columns['']]
-
-    #blendshapes = list(csv_columns.keys())[2:]
-
-    rig_instances = crp.create_rig_class_instances()
-    processed_frames = [process_frame(f, rig_instances) for f in rows]
-    batch_data = build_batch(processed_frames, rig_instances)
-    apply_batch_to_unreal(batch_data, rig_instances, ls, face_rig)
-
-
-
-    '''
-    for blendshape in blendshapes:
-        if blendshape not in A2F_TO_METAHUMAN:
-            continue
-
-        print("Calculating blendshape:", blendshape)
-
-        #values_array = unreal.Array(float)
-        #values_array.append(float(val))
-        #values = [float(x) for x in csv_columns[blendshape]]
-
-        # Applica i keyframes a tutti i controlli mappati
-        for face_control in A2F_TO_METAHUMAN[blendshape]:
-            unreal.ControlRigSequencerLibrary.set_local_control_rig_floats(
-                level_sequence,
-                face_rig,
-                unreal.Name(face_control),
-                csv_columns[''],
-                csv_columns[blendshape]
-            )
-
-    
-            for row in csv_columns:
-            print("Calculating frame: ", row[''])
-            for blendshape in A2F_TO_METAHUMAN:
-                csv_blendshape_key = CSV_PREFIX + blendshape
-                if csv_blendshape_key in row:
-                    for face_control_rig in A2F_TO_METAHUMAN[blendshape]:
-                        #print("INIZIO - face_control_rig: " + face_control_rig + " blendshape: " + blendshape)
-                        unreal.ControlRigSequencerLibrary.set_local_control_rig_float(level_sequence, face_rig, unreal.Name(face_control_rig),
-                                                                          unreal.FrameNumber(int(row[''])), float(row[csv_blendshape_key]))
-                        #print("FINE - face_control_rig: " + face_control_rig + " blendshape: " + blendshape)
-                          
-    '''
-
-
-
-
-
-    # FIXME is correct pos?
-    level_sequence.set_playback_start(0)
-    level_sequence.set_playback_end(csv_columns[''][-1].value)
-    print("Keyframe calculation complete!")
 
 
 def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
