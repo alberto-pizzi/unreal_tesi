@@ -2,7 +2,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-
+import audio_dataset_processing as adp
+from audio_dataset_processing import limit_AudioInfo
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -24,8 +25,24 @@ def batch_a2f_csv():
     wav_file_paths = list(AUDIO_DIR.glob("*.wav"))
     print("Audio file paths: ", str(wav_file_paths))
 
-    for wav_file_path in wav_file_paths:
-        run_a2f(wav_file_path)
+    # TODO add dataset
+    audio_files_processed = adp.process_audio_to_AudioInfo(wav_file_paths,adp.Dataset_CREMA_D)
+
+    """
+    emotions = [
+        adp.d_maps.Emotions.HAPPY,
+        adp.d_maps.Emotions.SAD,
+        adp.d_maps.Emotions.ANGRY
+    ]
+
+    audio_files_filtered = adp.filter_AudioInfo_by(audio_files_processed,emotions=emotions)
+
+    results = limit_AudioInfo(audio_files_filtered,)
+    """
+
+
+    for wav_file_path in audio_files_processed:
+        run_a2f(wav_file_path.path)
 
 def run_a2f(audio_file_path: Path):
     client_path = CLIENT_DIR / CLIENT_NAME
@@ -76,6 +93,16 @@ if __name__ == "__main__":
     print("start main python")
 
     batch_a2f_csv()
+    """
+    wav_file_paths = list(AUDIO_DIR.glob("*.wav"))
+    print("Audio file paths: ", str(wav_file_paths))
+
+    # TODO add dataset
+    audio_files_processed = adp.process_audio_to_AudioInfo(wav_file_paths,adp.Dataset_CREMA_D)
+    audio_files_filtered = adp.filter_AudioInfo_by(audio_files_processed,emotions=[adp.d_maps.Emotions.HAPPY])
+    """
+
+    print(audio_files_filtered)
 
     print("end main python")
 

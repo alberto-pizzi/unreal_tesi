@@ -16,11 +16,18 @@ class Intensity(Enum):
     LOW = "low"
     UNSPECIFIED = "unspecified"
 
+# TODO add lambda?
 class AudioInfoEnum(Enum):
     ACTOR = "actor"
     SENTENCE = "sentence"
     EMOTIONS = "emotions"
     INTENSITY = "intensity"
+    GENRE = "genre"
+
+class Genders(Enum):
+    MALE = "male"
+    FEMALE = "female"
+    UNSPECIFIED = "unspecified"
 
 
 
@@ -38,6 +45,10 @@ CREMA_D_MAP = {
         "HI": Intensity.HIGH,
         "LO": Intensity.LOW,
         "XX": Intensity.UNSPECIFIED,
+    },
+    AudioInfoEnum.GENRE: {
+        "Male": Genders.MALE,
+        "Female": Genders.FEMALE,
     }
 }
 
@@ -55,5 +66,9 @@ RAVDESS_MAP = {
     AudioInfoEnum.INTENSITY: {
         "01": Intensity.NORMAL,
         "02": Intensity.HIGH,
+    },
+    AudioInfoEnum.GENRE: {
+        "MALE": Genders.MALE,
+        "FEMALE": Genders.FEMALE,
     }
 }

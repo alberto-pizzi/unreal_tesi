@@ -1,67 +1,59 @@
-from dataclasses import dataclass
-from typing import Dict, Any
-from abc import ABC, abstractmethod
-from pathlib import Path
-import audio_dataset_maps as d_maps
+from audio_dataset_classes import *
+from typing import Type
+
+DATASET_TYPE = {
+    "RAVDESS": Dataset_RAVDESS,
+    "CREMA-D": Dataset_CREMA_D,
+}
 
 
-@dataclass
-class AudioInfo:
-    path: Path
-    actor: str
-    emotion: d_maps.Emotions
-    sentence: str
-    intensity: d_maps.Intensity = d_maps.Intensity.UNSPECIFIED
-    extra: Dict[str, Any] = None
+def process_audio_to_AudioInfo(paths: list[Path],DatasetClass:Type[AudioDatasetParser]) -> list[AudioInfo]:
+    audio_processed = []
 
+    for path in paths:
+        instance = DatasetClass()
+        audio_processed.append(instance.parse(path))
 
-# abstract class
-class AudioDatasetParser(ABC):
-    MAP: Dict[d_maps.AudioInfoEnum, Any] = {}
+    return audio_processed
 
-    @abstractmethod
-    def parse(self, filename_path: Path) -> AudioInfo:
-        pass
+def filter_AudioInfo_by(AudioInfo_list:list[AudioInfo],emotions=None, genders = None, actors = None, intensity = None) -> list[AudioInfo]:
 
-    def decode_info(self, emotion_encoded,intensity_encoded):
-        emotion_decoded = self.MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_encoded]
-        intensity_decoded = self.MAP[d_maps.AudioInfoEnum.INTENSITY][intensity_encoded]
-        return emotion_decoded, intensity_decoded
+    if emotions and not isinstance(emotions, list):
+        emotions = [emotions]
+    if genders and not isinstance(genders, list):
+        genders = [genders]
+    if actors and not isinstance(actors, list):
+        actors = [actors]
+    if intensity and not isinstance(intensity, list):
+        intensity = [intensity]
 
+    return [
+        instance for instance in AudioInfo_list
+        if (not emotions or instance.emotion in emotions)
+        and (not genders or instance.gender in genders)
+           and (not actors or instance.actor in actors)
+           and (not intensity or instance.intensity in intensity)
 
-# dataset classes
+        # you can add here other filters...
+    ]
 
-class Dataset_CREMA_D(AudioDatasetParser):
-    MAP = d_maps.CREMA_D_MAP
+def limit_AudioInfo(AudioInfo_list:list[AudioInfo], max_value_by_parameter:int, class_field_name:str) -> list[AudioInfo]:
+    if not max_value_by_parameter or not class_field_name:
+        return AudioInfo_list
 
-    def parse(self, filename_path: Path) -> AudioInfo:
-        filename = filename_path.stem
-        split = filename.split("_")
+    groups = {}
 
-        actor_encoded = split[0]
-        sentence_encoded = split[1]
-        emotion_encoded = split[2]
-        intensity_encoded = split[3]
+    # group by
+    for item in AudioInfo_list:
+        key = getattr(item, class_field_name)
+        groups[key].append(item)
 
-        emotion_decoded, intensity_decoded = self.decode_info(emotion_encoded, intensity_encoded)
+    # limit
+    limited_list = []
+    for items in groups.values():
+        limited_list.extend(items[:max_value_by_parameter])
 
-        return AudioInfo(path=filename_path, actor=actor_encoded, emotion=emotion_decoded, sentence=sentence_encoded, intensity=intensity_decoded)
-
-class Dataset_RAVDESS(AudioDatasetParser):
-    MAP = d_maps.RAVDESS_MAP
-
-    def parse(self, filename_path: Path) -> AudioInfo:
-        filename = filename_path.stem
-        split = filename.split("-")
-
-        emotion_encoded = split[2]
-        intensity_encoded = split[3]
-        sentence_encoded = split[4]
-        actor_encoded = split[6]
-
-        emotion_decoded, intensity_decoded = self.decode_info(emotion_encoded, intensity_encoded)
-
-        return AudioInfo(path=filename_path, actor=actor_encoded, emotion=emotion_decoded, sentence=sentence_encoded, intensity=intensity_decoded)
+    return limited_list
 
 
 
