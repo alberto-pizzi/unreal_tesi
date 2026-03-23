@@ -1,10 +1,3 @@
-# FIXME add it into main file
-import sys
-import os
-
-current_dir = os.path.dirname(__file__)
-sys.path.append(current_dir)
-
 
 import unreal
 import csv
@@ -12,21 +5,11 @@ import time
 from a2f_involved_rig_maps import A2F_TO_METAHUMAN
 import contro_rig_processing as crp
 #import control_rig_maps as crm
+from config import *
+from pathlib import Path
 
 
-# config
-#TODO edit paths
-
-CSV_PATH = r"C:/Users/alber/Desktop/"
-ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"
-FRAME_RATE = 30.0
-
-SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
-SKELETON_NAME = "Face_Archetype_Skeleton"
-#LS_PATH = "/Game/LevelSequences/" # FIXME
-LS_PATH = "/Game/"
-
-#prefixes
+# CSV CONFIG
 CSV_PREFIX = "blendShapes."
 time_code_tag = "timeCode"
 
@@ -38,7 +21,7 @@ def load_level_sequence(seq_filename:str):
 # TODO delete arkit_csv_names?
 def read_csv_by_row(filename):
 
-    with open(CSV_PATH + filename, newline='') as f:
+    with open(CSV_FOLDER_PATH + filename, newline='') as f:
         reader = csv.DictReader(f)
         # remove prefix from all blendshapes
         reader.fieldnames  = [key.strip().removeprefix(CSV_PREFIX)
@@ -59,10 +42,10 @@ def read_csv_by_row(filename):
     - Headers: strings
     Returns a list of dictionaries.
 """
-def read_csv_with_conversion(filename):
+def read_csv_with_conversion(filename_path):
 
     data = []
-    with open(CSV_PATH + filename, newline='', encoding='utf-8') as csvfile:
+    with open(filename_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         reader.fieldnames  = [key.strip().removeprefix(CSV_PREFIX)
                              for key in reader.fieldnames]
@@ -192,6 +175,7 @@ def apply_batch_to_unreal(batch, rig_instances, level_sequence, face_rig, frame_
 def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
     binding = level_sequence.find_binding_by_name("Face")
 
+    # TODO add function to calculate obj path
     # set skeleton
     skeleton = unreal.load_object(None,SKELETON_PATH+SKELETON_NAME+"."+SKELETON_NAME)
     factory = unreal.AnimSequenceFactory()
@@ -232,13 +216,15 @@ def bake_to_animation_sequence(level_sequence,anim_seq_filename:str):
 
     print("Bake executed successfully!")
 
-
-def get_csv_file_list(directory:str):
+# returns csv file list with extension ".csv" with directory as input
+def get_csv_paths_into_subfolders(root_dir:str, csv_filename:str= "animation_frames.csv") -> list[Path]:
+    root_path = Path(root_dir)
     results = []
 
-    for filename in os.listdir(directory):
-        if filename.lower().endswith(".csv"):
-            results.append(filename)
+    # find into subfolders
+    for file_path in root_path.rglob(csv_filename):
+        if file_path.is_file():
+            results.append(file_path)
 
     return results
 
@@ -264,7 +250,7 @@ if __name__ == '__main__':
 
     #import_audio_as_asset("1001_DFA_HAP_XX.wav")
 
-    rows = read_csv_with_conversion("animation_frames.csv")
+    rows = read_csv_with_conversion(CSV_FOLDER_PATH + "animation_frames.csv")
 
     insert_keyframes_by_row(ls, rows)
     #bake_to_animation_sequence(ls,"ColumnsTestNuovo")

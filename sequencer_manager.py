@@ -1,30 +1,13 @@
 import unreal
 import time
 from pathlib import Path
-
-# WARNING: insert keyframes and bake animation first (for playback times)
-# IMPORTANT :Unreal accepts ONLY paths UNIX-like
+from config import *
 
 
-#TODO edit paths
-
-AUDIO_ASSETS_PATH = "/Game/AudioAssetImported/"
-
-ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"
-
-MH_BASE_PATH = "/Game/MetaHumans/"
-LS_BASE_PATH = "/Game/LevelSequences/"
-LS_PATH_TMP = "/Game/" #TODO to be delete
-
-camera_settings = {
-    "AspectRatio": 1.2,
-    "FieldOfView": 85.0,
-}
-
-def create_level_sequence(ls_name):
+def create_level_sequence(ls_name,base_path=LS_BASE_PATH):
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
     factory = unreal.LevelSequenceFactoryNew()
-    ls = asset_tools.create_asset(ls_name, LS_BASE_PATH, unreal.LevelSequence, factory)
+    ls = asset_tools.create_asset(ls_name, str(base_path), unreal.LevelSequence, factory)
     if ls:
         print("Level Sequence Created Successfully!")
     else:
@@ -432,6 +415,18 @@ def clear_sequencer(level_sequence):
     for track in tracks:
         level_sequence.remove_track(track)
 
+
+# IMPORTANT: call it BEFORE master loop (in main.py). It is necessary to PRE-CALCULATE because is not possible obtain skeletal meshes on spawnable object (just possessable)
+def get_actor_cams_locations_and_rotations(official_actor_names: list):
+    coordinates_by_mh = {}
+
+    for actor_name in official_actor_names:
+        actor_obj = spawn_metahuman(actor_name)
+        add_possessable_actor_into_ls(actor_obj)
+        location, rotation = calculate_camera_pos(actor_obj)
+        coordinates_by_mh[actor_name] = location, rotation
+
+    return coordinates_by_mh
 
 
 if __name__ == "__main__":

@@ -1,12 +1,5 @@
 import unreal
-
-# FIXME
-LEVELS_PATH = "/Game/Levels/"
-QUEUES_PATH = "/Game/RenderingQueues/"
-RENDERING_SETTINGS_PATH = "/Game/RenderingSettings/"
-RENDERING_SETTINGS_NAME = "mp4_1280x720"
-LS_PATH = "/Game/"
-LEVEL_NAME = "BaseLevel"
+from config import *
 
 def get_rendering_settings_path(setting_name:str):
     full_path = RENDERING_SETTINGS_PATH + setting_name + "." + setting_name
