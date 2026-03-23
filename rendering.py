@@ -6,7 +6,7 @@ def get_rendering_settings_path(setting_name:str):
     return full_path
 
 def get_ls_path(ls_name:str):
-    full_path = LS_PATH + ls_name + "." + ls_name
+    full_path = LS_BASE_PATH + ls_name + "." + ls_name
     return full_path
 
 def get_level_path(level_name:str):

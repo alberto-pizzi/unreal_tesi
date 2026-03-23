@@ -424,6 +424,8 @@ def get_actor_cams_locations_and_rotations(official_actor_names: list):
         add_possessable_actor_into_ls(actor_obj)
         location, rotation = calculate_camera_pos(actor_obj)
         coordinates_by_mh[actor_name] = location, rotation
+        despawn_metahuman(actor_obj)
+
 
     return coordinates_by_mh
 

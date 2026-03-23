@@ -171,14 +171,14 @@ class EyeBlinkRightCR(ControlRig):
     def calculate(self, frame_row: dict,source_blendshape: str = None):
         x = frame_row.get("EyeBlinkRight", 0)
 
-        base = (2*x-1)*0.78
+        base = (2*x-1)*0.58
 
         low_threshold = 0.2
         high_threshold = 0.8
 
-        boosted = theshold_boosts(x, low_threshold, high_threshold, base)
+        #boosted = theshold_boosts(x, low_threshold, high_threshold, base)
 
-        return boosted
+        return base
 
 
 class EyeBlinkLeftCR(ControlRig):
@@ -189,14 +189,14 @@ class EyeBlinkLeftCR(ControlRig):
 
     def calculate(self, frame_row: dict,source_blendshape: str = None):
         x = frame_row.get("EyeBlinkLeft", 0)
-        base = (2*x-1)*0.74
+        base = (2*x-1)*0.54
 
         low_threshold = 0.2
         high_threshold = 0.8
 
-        boosted = theshold_boosts(x, low_threshold, high_threshold, base)
+        #boosted = theshold_boosts(x, low_threshold, high_threshold, base)
 
-        return boosted
+        return base
 
 
 

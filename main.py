@@ -24,23 +24,21 @@ def collect_filename_paths_by_extension(directory: str, extension: str) -> list[
     file_list = [p for p in path.rglob(f"*{extension}") if p.is_file()]
     return file_list
 
-def get_animation_sequence_filename(mh_name:str, primal_audio_filename:str, suffix:str= ""):
-    animation_sequence_filename = mh_name + "_" + os.path.splitext(primal_audio_filename)[0] + suffix
+def get_animation_sequence_filename(primal_audio_filename: str, suffix: str = ""):
+    animation_sequence_filename = os.path.splitext(primal_audio_filename)[0] + suffix
     return animation_sequence_filename
 
-def generate_animations(csv_paths:list[Path]):
-    primal_audio_filenames = []
+def generate_animation(level_sequence,csv_path):
+    #primal_audio_filenames = []
+    primal_audio_filename = csv_path.parent.name
+    #primal_audio_filenames.append(primal_audio_filename)
+    rows = anim_creator.read_csv_with_conversion(csv_path)
 
-    for csv_path in csv_paths:
-        primal_audio_filename = csv_path.parent.name
-        primal_audio_filenames.append(primal_audio_filename)
-        rows = anim_creator.read_csv_with_conversion(csv_path)
+    anim_creator.insert_keyframes_by_row(level_sequence, rows)
+    animation_sequence_filename = get_animation_sequence_filename(primal_audio_filename)
+    anim_creator.bake_to_animation_sequence(level_sequence, animation_sequence_filename)  # FIXME choose filename
 
-        anim_creator.insert_keyframes_by_row(ls, rows)
-        animation_sequence_filename = get_animation_sequence_filename(mh_name,primal_audio_filename)
-        anim_creator.bake_to_animation_sequence(ls, animation_sequence_filename)  # FIXME choose filename
-
-    return primal_audio_filenames
+    return primal_audio_filename
 
 def delete_asset_into_directory(directory:str,asset_name:str):
     unreal.EditorAssetLibrary.delete_asset(directory+asset_name)
@@ -73,11 +71,24 @@ if __name__ == "__main__":
         raise ValueError(f"No CSV files found in {CSV_FOLDER_PATH}")
 
     # WARNING: insert keyframes and bake animation first (for playback times)
-    if GENERATE_ANIMATION_SEQUENCE:
+    if GENERATE_ANIMATION_SEQUENCE and METAHUMANS_INSTALLED:
         check_or_create_asset_directory(TMP_LS_BASE_PATH)
         delete_all_assets_into_directory(TMP_LS_BASE_PATH)
+        check_or_create_asset_directory(ANIMATION_PATH)
+        delete_all_assets_into_directory(ANIMATION_PATH)
         ls = sequencer_manager.create_level_sequence("BakingSequence", TMP_LS_BASE_PATH)
-        animation_names = generate_animations(csv_paths)
+        unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(ls)
+        mh_class = sequencer_manager.load_actor_class(METAHUMANS_INSTALLED[0])
+        for csv_path in csv_paths:
+            sequencer_manager.clear_sequencer(ls)
+            mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
+            animation_frame = generate_animation(ls, csv_path)
+
+        sequencer_manager.clear_sequencer(ls)
+
+
+
+
 
     animation_sequence_asset_names = get_asset_names_in_directory(ANIMATION_PATH)
 

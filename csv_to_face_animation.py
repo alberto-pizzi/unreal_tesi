@@ -14,11 +14,11 @@ CSV_PREFIX = "blendShapes."
 time_code_tag = "timeCode"
 
 def load_level_sequence(seq_filename:str):
-    full_path = LS_PATH + seq_filename + "." + seq_filename
+    full_path = LS_BASE_PATH + seq_filename + "." + seq_filename
     level_sequence = unreal.load_asset(full_path)
     return level_sequence
 
-# TODO delete arkit_csv_names?
+# TODO delete arkit_csv_names? delete all?
 def read_csv_by_row(filename):
 
     with open(CSV_FOLDER_PATH + filename, newline='') as f:
