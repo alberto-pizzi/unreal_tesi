@@ -56,7 +56,7 @@ def check_or_create_asset_directory(directory:str):
 
 def get_asset_names_in_directory(directory_path, recursive=False):
     asset_paths = unreal.EditorAssetLibrary.list_assets(directory_path, recursive=recursive, include_folder=False)
-    asset_names = [path.split('/')[-1] for path in asset_paths]
+    asset_names = [path.split('/')[-1].split('.')[-1] for path in asset_paths]
     return asset_names
 
 def get_ls_name(mh_name:str,animation_name:str):
@@ -100,14 +100,16 @@ if __name__ == "__main__":
 
                 ls_name = get_ls_name(mh_name,animation_name)
                 ls = sequencer_manager.create_level_sequence(ls_name)
+                unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(ls)
                 mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
                 #sequencer_manager.set_location_rotation_of_element(mh_binding,[0,0,0],[0,0,0],)
+                sequencer_manager.attach_anim_sequence_to_face(ls, animation_name)
                 camera_binding = sequencer_manager.add_camera_into_sequencer(ls, camera_locations_and_rotation_by_mh[mh_name][0],
                                                                              camera_locations_and_rotation_by_mh[mh_name][1])
                 sequencer_manager.set_property_camera(ls, camera_settings, ls.get_playback_start(), ls.get_playback_end())
                 sequencer_manager.add_cut_camera_into_sequencer(ls, camera_binding)
 
-                sequencer_manager.attach_anim_sequence_to_face(ls,animation_name)
+
 
                 if MAKE_LS_WITH_AUDIO:
                     audio_asset = sequencer_manager.get_audio_asset(animation_name)
@@ -118,7 +120,7 @@ if __name__ == "__main__":
                 #save
                 unreal.EditorAssetLibrary.save_loaded_asset(ls)
 
-        print("Generated "+ c + " sequences!")
+        print("Generated ", c, " sequences!")
 
     # TODO add rendering
 

@@ -20,6 +20,8 @@ INPUT_AUDIO_PATH = "C:/Users/alber/PycharmProjects/PythonProject1/input_audio_fi
 CSV_FOLDER_PATH = r"C:/Users/alber/Desktop/"
 
 
+
+
 # unreal Paths
 TMP_LS_BASE_PATH = "/Game/LevelSequences/TmpSequences/"
 ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"

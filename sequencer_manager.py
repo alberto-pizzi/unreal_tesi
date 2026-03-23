@@ -389,10 +389,9 @@ def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
 
     animation_length_frames = int(animation_length_seconds * fps)
 
-    # FIXME is correct pos?
-    '''
+
     level_sequence.set_playback_start(0)
-    level_sequence.set_playback_end(animation_length_frames)'''
+    level_sequence.set_playback_end(animation_length_frames)
 
     anim_track = binding.add_track(unreal.MovieSceneSkeletalAnimationTrack)
     anim_section = anim_track.add_section()
@@ -445,8 +444,14 @@ if __name__ == "__main__":
     ls = create_level_sequence(sequence_filename)
     '''
     #ls = load_level_sequence("SeqVM")
-    ls = load_level_sequence("SeqVM")
-    print(ls)
+    #ls = load_level_sequence("SeqVM")
+    #print(ls)
+
+    ls = create_level_sequence("ProvaCreazione")
+    if ls:
+        print("Creazione avvenuta")
+    else:
+        print("Non creazione")
 
     #mh_class = load_actor_class("Bryan")
     #print(mh_class)
