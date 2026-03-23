@@ -50,11 +50,21 @@ def import_ls_into_mrq(ls_name:str,queue_name:str):
         else:
             unreal.log_error(f"Unable to load queue: {queue_name}")
 
+def get_current_queue():
+    subsystem = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)
+    # take current queue
+    queue = subsystem.get_queue()
+    return queue
 
 
 if __name__ == "__main__":
     print("Im rendering")
-    import_ls_into_mrq("SeqVM","RenderingQueue1")
+    #import_ls_into_mrq("SeqVM","RenderingQueue1")
+    #queue = create_movie_render_queue_asset("Prova")
+
+
+
+    print("Coda: ", QUEUE_NAME)
     print("End main")
 
 

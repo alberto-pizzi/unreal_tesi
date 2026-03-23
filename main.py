@@ -7,6 +7,7 @@ sys.path.append(current_dir)
 
 import unreal
 import sequencer_manager
+import rendering
 import csv_to_face_animation as anim_creator
 from pathlib import Path
 from config import *
@@ -122,7 +123,13 @@ if __name__ == "__main__":
 
         print("Generated ", c, " sequences!")
 
-    # TODO add rendering
+
+    if IMPORT_ALL_LS_INTO_MRQ:
+        ls_names = get_asset_names_in_directory(LS_BASE_PATH)
+        print(ls_names)
+
+        for ls_name in ls_names:
+            rendering.import_ls_into_mrq(ls_name,QUEUE_NAME)
 
 
 

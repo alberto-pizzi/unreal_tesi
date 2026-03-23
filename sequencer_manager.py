@@ -62,7 +62,7 @@ def add_spawnable_actor_into_ls(level_sequence, actor_class):
     return spawnable_binding
 
 def get_ls_path(seq_filename:str):
-    full_path = LS_PATH_TMP + seq_filename + "." + seq_filename
+    full_path = LS_BASE_PATH + seq_filename + "." + seq_filename
     return full_path
 
 

@@ -1,15 +1,16 @@
 # CONFIG FILE
 
 # IMPORTANT :Unreal accepts ONLY paths UNIX-like
+# ESSENTIAL: these boolean variables are ESSENTIALS to function.
 
 # PREFERENCES
 GENERATE_ANIMATION_SEQUENCE = False # Set False if you already have animation sequences. Set True if not, generating them.
 IMPORT_AUDIO_ASSETS = False # Set False if you already have audio as ASSETS. Set True if not, importing them.
-GENERATE_LS_FOREACH_MH = True
-MAKE_LS_WITH_AUDIO = True
+GENERATE_LS_FOREACH_MH = False
+MAKE_LS_WITH_AUDIO = False
 
 # RENDERING (MRQ)
-IMPORT_ALL_LS_INTO_MRQ = False
+IMPORT_ALL_LS_INTO_MRQ = True
 
 
 # PATHS
@@ -21,14 +22,12 @@ CSV_FOLDER_PATH = r"C:/Users/alber/Desktop/"
 
 
 
-
 # unreal Paths
 TMP_LS_BASE_PATH = "/Game/LevelSequences/TmpSequences/"
 ANIMATION_PATH = "/Game/MetaHumans/Animations/CustomAnimations/"
 AUDIO_ASSETS_PATH = "/Game/AudioAssetImported/"
 MH_BASE_PATH = "/Game/MetaHumans/"
 LS_BASE_PATH = "/Game/LevelSequences/SequencesToRender/"
-LS_PATH_TMP = "/Game/" #TODO to be delete
 SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
 SKELETON_NAME = "Face_Archetype_Skeleton"
 #LS_PATH = "/Game/LevelSequences/" # FIXME
@@ -54,5 +53,6 @@ camera_settings = {
 # RENDERING SETTINGS
 
 RENDERING_SETTINGS_PATH = "/Game/RenderingSettings/"
-RENDERING_SETTINGS_NAME = "mp4_1280x720"
+RENDERING_SETTINGS_NAME = "mp4desktop"
 
+QUEUE_NAME = "EmptyQueue"
