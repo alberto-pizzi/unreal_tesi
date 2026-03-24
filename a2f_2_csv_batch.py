@@ -44,7 +44,8 @@ def batch_a2f_csv():
     for wav_file_path in audio_files_processed:
         run_a2f(wav_file_path.path)
 
-def run_a2f(audio_file_path: Path):
+
+def run_a2f(audio_file_path: Path, output_path: Path):
     client_path = CLIENT_DIR / CLIENT_NAME
     print("Client path: ", str(client_path))
 
@@ -65,27 +66,28 @@ def run_a2f(audio_file_path: Path):
     print("Executing: ", cmd)
 
     print(f"Processing: {str(audio_file_path)}")
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=OUTPUT_DIR)
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=output_path)
 
     if result.returncode == 0:
-        folder = find_folder_names_by_prefix("2026")[0]
-        rename_folder(folder, audio_filename)
+        folder = find_folder_names_by_prefix(output_path,"2026")[0]
+        rename_folder(output_path,folder, audio_filename)
         print(f"Completed: {audio_filename}")
     else:
         print(f"Error: {result.stderr}")
 
 #TODO conviene rinominare anche i csv interni?
-def rename_folder(old_folder_name, new_folder_name):
-    path = Path().cwd() #take current absolute path
-    folder_path = path /Path(OUTPUT_FOLDER)
-    os.rename(folder_path / old_folder_name, folder_path / new_folder_name)
+def rename_folder(output_path:Path,old_folder_name, new_folder_name):
+    #path = Path().cwd() #take current absolute path
+    #folder_path = path /Path(OUTPUT_FOLDER)
+    os.rename(output_path / old_folder_name, output_path / new_folder_name)
     print(f"Renamed: {old_folder_name} -> {new_folder_name}")
 
 # WARNING: the prefix should be "2026" according to the outputs, because it corresponds to the year of creation of the output file
-def find_folder_names_by_prefix(prefix):
-    path = Path().cwd() #take current absolute path
-    folder_path = path /Path(OUTPUT_FOLDER)
-    folders = [d.stem for d in folder_path.iterdir() if d.is_dir() and d.name.startswith(prefix)]
+def find_folder_names_by_prefix(output_path:Path,prefix):
+    #path = Path().cwd() #take current absolute path
+    #folder_path = path /Path(OUTPUT_FOLDER)
+
+    folders = [d.stem for d in output_path.iterdir() if d.is_dir() and d.name.startswith(prefix)]
     return folders
 
 
@@ -102,7 +104,7 @@ if __name__ == "__main__":
     audio_files_filtered = adp.filter_AudioInfo_by(audio_files_processed,emotions=[adp.d_maps.Emotions.HAPPY])
     """
 
-    print(audio_files_filtered)
+    #print(audio_files_filtered)
 
     print("end main python")
 
