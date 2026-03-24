@@ -87,9 +87,6 @@ if __name__ == "__main__":
         sequencer_manager.clear_sequencer(ls)
 
 
-
-
-
     animation_sequence_asset_names = get_asset_names_in_directory(ANIMATION_PATH)
 
     #import audio as assets
@@ -99,9 +96,10 @@ if __name__ == "__main__":
 
     audio_asset_names = get_asset_names_in_directory(AUDIO_ASSETS_PATH)
 
-    camera_locations_and_rotation_by_mh = sequencer_manager.get_actor_cams_locations_and_rotations(METAHUMANS_INSTALLED)
 
     if GENERATE_LS_FOREACH_MH:
+        camera_locations_and_rotation_by_mh = sequencer_manager.get_actor_cams_locations_and_rotations(
+            METAHUMANS_INSTALLED)
 
         c = 0
         for mh_name in METAHUMANS_INSTALLED:
