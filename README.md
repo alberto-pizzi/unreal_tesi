@@ -63,6 +63,36 @@ This pipeline is thinked to executend into 3 step (or 2: step 1 and 2 can be mer
 3. Render entire queues saved by Unreal Editor or by Python scirpt (to be fixed, but not relevent for rendering video)
 4. ...
 
+### How to config Unreal Engine to run main.py
+
+Actually, `main.py` execute pipeline **from** generating animation sequences **to** importing all levels sequences created into Movie Render Queue (MRQ).
+
+
+1. Download and Run Unreal Engine 5.6+ (better for Windows 10/11)
+2. Create new **GAME** project, as **C++** project. Blank project is ok.
+3. Make sure you have installed (or intall) following plugins from `Edit -> Plugin`: **Python Editor Script Plugin**,**Sequencer Scripting**, **Movie Render Queue** and **MetaHuman SDK**. Then restart editor, if needed.
+4. Create (or open) a level from `File -> New Level` or `File -> Open Level`
+5. Intall (download and **add**) MetaHumans into you project: from `Window -> QuxelBridge`, you can follow [this videoguide](https://youtu.be/3H7pHTArkaU). **IMPORTANT:** To check if they have been correctly added to the project, you should see a new folder (into game path in *Content Browser*) called "MetaHumans" with inside some subfolder called like your MetaHumans added...
+6. Go to game path `/Game/Content/` and create new folder called `Python`. In this folder you have to put *every* python script (like this repo). If you prefer, link files will be fine too.
+7. Go into `config.py` and set parameters. specially you have to add yours **MetaHumans official names** (it is case sensitive) into `METAHUMANS_INSTALLED` list. Then you should set paths (making the distinction between game path and absolute paths). Game paths **always start** from `/Game/` folder. **IMPORTANT:** Make sure that *every* game path folder into `config.py` really exists. **Boolean variables at the beginning are essential** because you should able/disable some part of pipeline.
+8. Create a **render settings asset file** and **render queue asset file** into path set into `config.py`. To make this, you should go to MRQ from `Window -> Cinematics -> Movie Render Queue` and then **set and export** these assets into **their respective game paths**. Then you have to *update* `config.py` with their names, if you haven't already done so.
+
+<!-- You can run [CLI](https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-the-unreal-editor-using-python) -->
+
+> [!NOTE]
+> If Unreal Editor crash often, set `IMPORT_AUDIO_ASSETS = False` into `config.py` and then **import manually** audio assets into game path written inside `config.py`. If crashes continues, 
+
+
+### How rendering works
+
+> [!IMPORTANT]
+> Before reder, you make sure **render setting asset file** and **render queue asset file** already exist.
+>
+
+If you have all *Level Sequences*, you are able to render with MRQ. Let's distinguish between the origin of the level sequences:
+
+- ***Level Sequences* generated with `main.py`**: if you set `IMPORT_ALL_LS_INTO_MRQ = True` into `config.py`, the **render queue asset file** previously created, will be populated.
+
 ## Requirements
 
 - Unreal Engine 5.6 with Python API and Movie Render Queue Plugin, better with Windows 10/11 with complete compatibility.
