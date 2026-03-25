@@ -36,7 +36,6 @@ SKELETON_PATH = "/Game/MetaHumans/Common/Face/"
 SKELETON_NAME = "Face_Archetype_Skeleton"
 LEVELS_PATH = "/Game/Levels/"
 LEVEL_NAME = "BaseLevel"
-QUEUES_PATH = "/Game/RenderingQueues/"
 
 
 
@@ -51,13 +50,14 @@ METAHUMANS_INSTALLED = [
 ]
 
 camera_settings = {
-    "AspectRatio": 1.2,
-    "FieldOfView": 85.0,
+    "AspectRatio": 1.778,
+    "FieldOfView": 50.0,
 }
 
 # RENDERING SETTINGS
 
-RENDERING_SETTINGS_PATH = "/Game/RenderingSettings/"
+RENDERING_SETTINGS_PATH = "/Game/RenderSettings/"
 RENDERING_SETTINGS_NAME = "mp4desktop"
 
+QUEUES_PATH = "/Game/RenderQueues/"
 QUEUE_NAME = "EmptyQueue"

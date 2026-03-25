@@ -27,28 +27,25 @@ def load_queue(queue_name:str):
     return movie_queue
 
 
-def import_ls_into_mrq(ls_name:str,queue_name:str):
+def import_ls_into_mrq(ls_name:str):
     mrq = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)
 
     if not ls_name:
-        unreal.log_error(f"Unable to load level sequence : {ls_name}")
-    else:
-        #queue = mrq.get_queue()
-        queue = load_queue(queue_name)
-        if queue and isinstance(queue, unreal.MoviePipelineQueue):
-            job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
+        unreal.log_error(f"Unable to load level sequence: {ls_name}")
+        return
 
-            job.map = unreal.SoftObjectPath(get_level_path(LEVEL_NAME))
-            job.sequence = unreal.SoftObjectPath(get_ls_path(ls_name))
-            job.job_name = ls_name
+    queue = mrq.get_queue()
+    if not queue:
+        unreal.log_error("No active MRQ queue found. Open the Movie Render Queue window first.")
+        return
 
-            preset = unreal.load_object(None, get_rendering_settings_path(RENDERING_SETTINGS_NAME))
-            job.set_configuration(preset)
+    job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
+    job.map = unreal.SoftObjectPath(get_level_path(LEVEL_NAME))
+    job.sequence = unreal.SoftObjectPath(get_ls_path(ls_name))
+    job.job_name = ls_name
 
-            unreal.EditorAssetLibrary.save_loaded_asset(queue)
-
-        else:
-            unreal.log_error(f"Unable to load queue: {queue_name}")
+    preset = unreal.load_object(None, get_rendering_settings_path(RENDERING_SETTINGS_NAME))
+    job.set_configuration(preset)
 
 def get_current_queue():
     subsystem = unreal.get_editor_subsystem(unreal.MoviePipelineQueueSubsystem)

@@ -1,5 +1,6 @@
 import unreal
 import time
+import random
 from pathlib import Path
 from config import *
 
@@ -155,6 +156,10 @@ def set_property_camera(level_sequence, camera_settings:dict,start_frame:int, en
 
     binding = level_sequence.find_binding_by_name("CameraComponent")
 
+    if not binding.is_valid():
+        print("WARNING: 'CameraComponent' binding not found in level sequence, skipping set_property_camera")
+        return
+
     tracks = binding.find_tracks_by_type(unreal.MovieSceneFloatTrack)
 
     for setting_name,setting_value in camera_settings.items():
@@ -298,6 +303,9 @@ def get_audio_asset_path(asset_filename:str):
     return full_path
 
 def add_audio_track_into_sequencer(level_sequence,audio_asset):
+    if audio_asset is None:
+        print("WARNING: audio_asset is None, skipping add_audio_track_into_sequencer")
+        return
     audio_track = level_sequence.add_track(unreal.MovieSceneAudioTrack)
     start_frame = level_sequence.get_playback_start()
     end_frame = level_sequence.get_playback_end()
@@ -343,6 +351,10 @@ def import_audio_as_asset(audio_filename_path: Path):
 def remove_face_control_rig_track(level_sequence):
     binding = level_sequence.find_binding_by_name("Face")
 
+    if not binding.is_valid():
+        print("WARNING: 'Face' binding not found, skipping remove_face_control_rig_track")
+        return
+
     tracks = binding.find_tracks_by_type(unreal.MovieSceneControlRigParameterTrack)
 
     for track in tracks:
@@ -380,6 +392,10 @@ def load_anim_sequence(anim_seq_filename:str):
 def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
     binding = level_sequence.find_binding_by_name("Face")
 
+    if not binding.is_valid():
+        print(f"WARNING: 'Face' binding not found in level sequence for '{anim_seq_filename}', skipping attach_anim_sequence_to_face")
+        return
+
     anim_sequence = load_anim_sequence(anim_seq_filename)
 
     animation_length_seconds = anim_sequence.get_play_length()
@@ -403,6 +419,36 @@ def attach_anim_sequence_to_face(level_sequence,anim_seq_filename:str):
 
     print("Attached animation sequence to face done successfully!")
 
+def add_body_movement(level_sequence, mh_binding, keyframe_step=20):
+    start_frame = level_sequence.get_playback_start()
+    end_frame = level_sequence.get_playback_end()
+
+    transform_tracks = mh_binding.find_tracks_by_type(unreal.MovieScene3DTransformTrack)
+    if transform_tracks:
+        transform_track = transform_tracks[0]
+    else:
+        transform_track = mh_binding.add_track(unreal.MovieScene3DTransformTrack)
+
+    sections = transform_track.get_sections()
+    if sections:
+        section = sections[0]
+    else:
+        section = transform_track.add_section()
+
+    section.set_range(start_frame, end_frame)
+    channels = section.get_all_channels()
+    # channels: [0]=tx [1]=ty [2]=tz [3]=rx(roll) [4]=ry(pitch) [5]=rz(yaw)
+
+    frame = start_frame
+    while frame <= end_frame:
+        fn = unreal.FrameNumber(frame)
+        channels[0].add_key(fn, random.uniform(-0.07, 0.07))   # sway X
+        channels[3].add_key(fn, random.uniform(-0.07, 0.07))   # roll
+        frame += keyframe_step
+
+    print("Body movement added!")
+
+
 def clear_sequencer(level_sequence):
 
     bindings = level_sequence.get_bindings()
@@ -421,7 +467,6 @@ def get_actor_cams_locations_and_rotations(official_actor_names: list):
 
     for actor_name in official_actor_names:
         actor_obj = spawn_metahuman(actor_name)
-        add_possessable_actor_into_ls(actor_obj)
         location, rotation = calculate_camera_pos(actor_obj)
         coordinates_by_mh[actor_name] = location, rotation
         despawn_metahuman(actor_obj)

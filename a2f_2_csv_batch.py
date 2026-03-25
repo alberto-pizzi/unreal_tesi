@@ -1,21 +1,66 @@
 import os
 import subprocess
 import sys
+import yaml
+import tempfile
 from pathlib import Path
 import audio_dataset_processing as adp
 from audio_dataset_processing import limit_AudioInfo
+from audio_dataset_maps import Emotions
 
 BASE_DIR = Path(__file__).resolve().parent
 
 # Settings
 API_KEY = "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"  # NVIDIA API
-FUNCTION_ID = "8efc55f5-6f00-424e-afe9-26212cd2c630"  #  Mark model
+FUNCTION_ID = "9327c39f-a361-4e02-bd72-e11b4c9b7b5e"  #  James model
 AUDIO_DIR = BASE_DIR / "input_audio_files"  # input folder
 OUTPUT_FOLDER = "output_csv" # output folder
 CLIENT_NAME = "nim_a2f_3d_client.py"
 CLIENT_DIR = BASE_DIR / "Audio2Face-3D-Samples"/"scripts"/"audio2face_3d_api_client"
 OUTPUT_DIR = BASE_DIR / OUTPUT_FOLDER
-CONFIG_YAML = CLIENT_DIR / "config" / "config_mark.yml"  # file YAM (mark) with emotions
+CONFIG_YAML = CLIENT_DIR / "config" / "config_james.yml"
+
+# Map dataset emotion labels to A2F emotion names (all 10 emotions the proto expects)
+EMOTION_TO_A2F = {
+    Emotions.HAPPY:   "joy",
+    Emotions.SAD:     "sadness",
+    Emotions.ANGRY:   "anger",
+    Emotions.DISGUST: "disgust",
+    Emotions.FEAR:    "fear",
+    Emotions.NEUTRAL: None,  # neutral: let A2E infer freely
+}
+
+ALL_A2F_EMOTIONS = ["amazement", "anger", "cheekiness", "disgust", "fear", "grief", "joy", "outofbreath", "pain", "sadness"]
+
+
+def make_emotion_config(emotion: Emotions) -> str:
+    """Generate a per-file temp YAML config with the ground-truth emotion injected."""
+    with open(CONFIG_YAML) as f:
+        config = yaml.safe_load(f)
+
+    a2f_emotion = EMOTION_TO_A2F.get(emotion)
+    is_neutral = a2f_emotion is None
+
+    if not is_neutral:
+        # Populate timecode list — required for enable_preferred_emotion to work
+        # Start at t=0.3 to let A2E stabilize before GT emotion fades in
+        emotion_values = {e: (1.0 if e == a2f_emotion else 0.0) for e in ALL_A2F_EMOTIONS}
+        config["emotion_with_timecode_list"] = {
+            "emotion_gt_start": {"time_code": 0.3,   "emotions": emotion_values},
+            "emotion_gt_end":   {"time_code": 100.0, "emotions": emotion_values},
+        }
+        config["post_processing_parameters"]["enable_preferred_emotion"] = True
+        config["post_processing_parameters"]["preferred_emotion_strength"] = 0.7
+    else:
+        # Neutral: no overrides, let A2E infer freely
+        config["emotion_with_timecode_list"] = {}
+        config["post_processing_parameters"]["enable_preferred_emotion"] = False
+
+    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False)
+    yaml.dump(config, tmp)
+    tmp.close()
+    print(f"  [tmp config] {tmp.name}")
+    return tmp.name
 
 
 # WARNING: this is a batch function
@@ -25,54 +70,36 @@ def batch_a2f_csv():
     wav_file_paths = list(AUDIO_DIR.glob("*.wav"))
     print("Audio file paths: ", str(wav_file_paths))
 
-    # TODO add dataset
-    audio_files_processed = adp.process_audio_to_AudioInfo(wav_file_paths,adp.Dataset_CREMA_D)
+    audio_files_processed = adp.process_audio_to_AudioInfo(wav_file_paths, adp.Dataset_CREMA_D)
 
-    """
-    emotions = [
-        adp.d_maps.Emotions.HAPPY,
-        adp.d_maps.Emotions.SAD,
-        adp.d_maps.Emotions.ANGRY
-    ]
-
-    audio_files_filtered = adp.filter_AudioInfo_by(audio_files_processed,emotions=emotions)
-
-    results = limit_AudioInfo(audio_files_filtered,)
-    """
+    for audio_info in audio_files_processed:
+        run_a2f(audio_info.path, audio_info.emotion)
 
 
-    for wav_file_path in audio_files_processed:
-        run_a2f(wav_file_path.path)
+def run_a2f(audio_file_path: Path, emotion: Emotions):
+    print(f"Processing: {audio_file_path.stem} | emotion: {emotion}")
 
-def run_a2f(audio_file_path: Path):
-    client_path = CLIENT_DIR / CLIENT_NAME
-    print("Client path: ", str(client_path))
+    tmp_config = make_emotion_config(emotion)
+    print(f"  GT emotion override: {emotion} -> {EMOTION_TO_A2F.get(emotion)}")
 
-    audio_filename = audio_file_path.stem
-    #output_blendshapes = OUTPUT_DIR / f"{audio_filename}_blendshapes.csv"
-    #print(str(output_blendshapes))
-    # print(str(audio_file_path))
+    try:
+        cmd = [
+            sys.executable, str(CLIENT_DIR / CLIENT_NAME),
+            str(audio_file_path), tmp_config,
+            "--apikey", API_KEY,
+            "--function-id", FUNCTION_ID
+        ]
 
-    print(str(audio_filename))
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=OUTPUT_DIR)
 
-    cmd = [
-        sys.executable, str(CLIENT_DIR/CLIENT_NAME),
-        str(audio_file_path), str(CONFIG_YAML),
-        "--apikey", API_KEY,
-        "--function-id", FUNCTION_ID
-    ]
-
-    print("Executing: ", cmd)
-
-    print(f"Processing: {str(audio_file_path)}")
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=OUTPUT_DIR)
-
-    if result.returncode == 0:
-        folder = find_folder_names_by_prefix("2026")[0]
-        rename_folder(folder, audio_filename)
-        print(f"Completed: {audio_filename}")
-    else:
-        print(f"Error: {result.stderr}")
+        if result.returncode == 0:
+            folder = find_folder_names_by_prefix("2026")[0]
+            rename_folder(folder, audio_file_path.stem)
+            print(f"  Completed: {audio_file_path.stem}")
+        else:
+            print(f"  Error: {result.stderr}")
+    finally:
+        os.unlink(tmp_config)
 
 #TODO conviene rinominare anche i csv interni?
 def rename_folder(old_folder_name, new_folder_name):

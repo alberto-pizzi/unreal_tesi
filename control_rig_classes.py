@@ -2,6 +2,9 @@ from enum import Enum
 
 from a2f_involved_rig_maps import A2F_TO_METAHUMAN
 
+# Global expression amplifier — raise this to make all expressions stronger
+EXPRESSION_SCALE = 1.0
+
 
 def theshold_boosts(x,low_threshold:float, high_threshold:float,base:float):
     if x < low_threshold:
@@ -37,7 +40,7 @@ class ControlRig:
     # default calculation is float. it calculates on CSV BLENDSHAPES
     def calculate(self, frame_row: dict, source_blendshape: str = None):
         key = source_blendshape if source_blendshape else self.name
-        return frame_row.get(key, 0.0)
+        return frame_row.get(key, 0.0) * EXPRESSION_SCALE
 
     # TODO to be deleted?
     def normalize(self, values):
@@ -65,7 +68,7 @@ class JawOpenCR(ControlRig):
     def calculate(self, frame_row: dict):
         x = frame_row.get("JawLeft", 0) - frame_row.get("JawRight", 0)
         y = frame_row.get("JawOpen", 0) * 0.42
-        return x, y
+        return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
 
 class MouthCornerLeftCR(ControlRig):
     DEFAULT_TYPE = RigType.VEC2
@@ -76,7 +79,7 @@ class MouthCornerLeftCR(ControlRig):
     def calculate(self, frame_row: dict):
         x = frame_row.get("MouthLeft", 0) - frame_row.get("MouthRight", 0)
         y = frame_row.get("MouthSmileLeft", 0) - frame_row.get("MouthFrownLeft", 0)
-        return x, y
+        return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
 
 class MouthCornerRightCR(ControlRig):
     DEFAULT_TYPE = RigType.VEC2
@@ -87,7 +90,7 @@ class MouthCornerRightCR(ControlRig):
     def calculate(self, frame_row: dict):
         x = frame_row.get("MouthRight", 0) - frame_row.get("MouthLeft", 0)
         y = frame_row.get("MouthSmileRight", 0) - frame_row.get("MouthDepressRight", 0)
-        return x, y
+        return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
 
 class NoseLeftCR(ControlRig):
     DEFAULT_TYPE = RigType.VEC2
@@ -97,7 +100,7 @@ class NoseLeftCR(ControlRig):
 
     def calculate(self, frame_row: dict):
         x = 0
-        y = frame_row.get("NoseSneerLeft", 0)
+        y = frame_row.get("NoseSneerLeft", 0) * EXPRESSION_SCALE
         return x, y
 
 class NoseRightCR(ControlRig):
@@ -108,7 +111,7 @@ class NoseRightCR(ControlRig):
 
     def calculate(self, frame_row: dict):
         x = 0
-        y = frame_row.get("NoseSneerRight", 0)
+        y = frame_row.get("NoseSneerRight", 0) * EXPRESSION_SCALE
         return x, y
 
 class TongueInOutCR(ControlRig):
@@ -130,7 +133,7 @@ class TongueMoveCR(ControlRig):
     def calculate(self, frame_row: dict):
         x = frame_row.get("TongueLeft", 0) - frame_row.get("TongueRight", 0)
         y = frame_row.get("TongueUp", 0) - frame_row.get("TongueDown", 0)
-        return x, y
+        return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
 
 class TongueWideNarrowCR(ControlRig):
     DEFAULT_TYPE = RigType.FLOAT
