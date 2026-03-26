@@ -23,13 +23,14 @@ import torch.optim as optim
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
 # destination training directory (where the videos will be copied and organized automatically)
-training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb/train"
+training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
 #training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb"
 
 videos_path = Path(videos_directory)
 training_path = Path(training_base_directory)
 train_path = training_path / "train"
 val_path = training_path / "val"
+test_path = training_path / "test"
 saved_models_dir = Path('./saved_models')
 saved_models_dir.mkdir(exist_ok=True)
 
@@ -57,10 +58,13 @@ def create_training_directory(DatasetClass:Type[adp.AudioDatasetParser]):
 
         emotion_label_training_path = train_path / emotion_label.value
         emotion_label_validation_path = train_path / emotion_label.value
+        emotion_label_test_path = test_path / emotion_label.value
 
         emotion_label_training_path.mkdir(exist_ok=True)
         emotion_label_validation_path.mkdir(exist_ok=True)
+        emotion_label_test_path.mkdir(exist_ok=True)
 
+        #TODO add validation dir?
         shutil.copytree(video_folder, emotion_label_training_path / video_folder.stem, dirs_exist_ok=True)
 
     print("Training directory created")
@@ -190,6 +194,27 @@ def train_model(
     print(f"Best loss: {best_loss:.4f}")
     return model, train_losses, best_loss
 
+def evaluate_model(model, dataloader):
+
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for batch_videos, labels in dataloader:
+            batch_videos = batch_videos.to(device)
+            labels = labels.to(device)
+
+            frame_preds = frame_voting(model, batch_videos)
+            outputs = torch.stack(frame_preds).mean(dim=0)
+
+            pred = outputs.argmax(dim=1)
+
+            correct += (pred == labels).sum().item()
+            total += labels.size(0)
+
+    accuracy = correct / total
+    return accuracy
 
 def predict_emotion(model, video_folder_path, transform, max_frames=16):
 
@@ -230,8 +255,8 @@ def make_inference(model_checkpoint_dir:str,new_video_directory:str, transform):
     if not emotion_name:
         emotion_name = "Emotion not found!"
 
-    print(f"🎭 Emotion: {emotion_name}")
-    print(f"📊 Confidence: {confidence:.2%}")
+    print(f"Emotion: {emotion_name}")
+    print(f"Confidence: {confidence:.2%}")
 
 def get_transform():
     transform = transforms.Compose([
@@ -268,13 +293,13 @@ if __name__ == "__main__":
 
     #create_training_directory(adp.Dataset_CREMA_D)
 
-    root = Path(training_base_directory)
+    root = Path(train_path)
     # data augmentation
     transform = get_transform()
 
     dataloader = create_dataloader(root, batch_size=8, transform=transform)
 
-    print(f"Dataset size: {len(dataloader.dataset)}")  # atteso: 48
+    print(f"Dataset size: {len(dataloader.dataset)}")
     print(f"Num batches: {len(dataloader)}")
 
 
@@ -286,7 +311,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
-    num_epochs = 20  # number of epochs
+    num_epochs = 10  # number of epochs
 
     trained_model, train_losses, best_loss = train_model(
         model=model,
@@ -295,6 +320,10 @@ if __name__ == "__main__":
         dataloader=dataloader,
         num_epochs=num_epochs,
     )
+
+    test_dataloader = create_dataloader(test_path, batch_size=8, transform=transform)
+    test_accuracy = evaluate_model(model=trained_model, dataloader=test_dataloader)
+    print(f"Test accuracy: {test_accuracy:.2%}")
 
     # inference
     new_video_directory = ""
