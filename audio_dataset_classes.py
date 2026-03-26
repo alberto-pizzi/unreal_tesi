@@ -28,6 +28,10 @@ class AudioDatasetParser(ABC):
     def parse(self, filename_path: Path) -> AudioInfo:
         pass
 
+    @abstractmethod
+    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+        pass
+
 
     def decode_info(self, emotion_encoded,intensity_encoded):
         emotion_decoded = self.MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_encoded]
@@ -78,6 +82,15 @@ class Dataset_CREMA_D(AudioDatasetParser):
                 actors.append(row)
         return actors
 
+    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+        split = folder_name.split("_")
+
+        emotion_detected = split[3]
+
+        return  d_maps.CREMA_D_MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_detected]
+
+
+
 class Dataset_RAVDESS(AudioDatasetParser):
     MAP = d_maps.RAVDESS_MAP
 
@@ -101,3 +114,10 @@ class Dataset_RAVDESS(AudioDatasetParser):
 
         return AudioInfo(path=filename_path, actor=actor_encoded, emotion=emotion_decoded, sentence=sentence_encoded, intensity=intensity_decoded,gender=gender)
 
+
+    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+        split = folder_name.split("-")
+
+        emotion_detected = split[3]
+
+        return d_maps.RAVDESS_MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_detected]

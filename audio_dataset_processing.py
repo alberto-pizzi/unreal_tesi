@@ -17,6 +17,12 @@ def process_audio_to_AudioInfo(paths: list[Path],DatasetClass:Type[AudioDatasetP
 
     return audio_processed
 
+def get_emotion_label_for_training(folder_name: str,DatasetClass:Type[AudioDatasetParser]) -> d_maps.Emotions:
+    instance = DatasetClass()
+    return instance.get_emotion_label(folder_name)
+
+
+
 def filter_AudioInfo_by(AudioInfo_list:list[AudioInfo],emotions=None, genders = None, actors = None, intensity = None) -> list[AudioInfo]:
 
     if emotions and not isinstance(emotions, list):

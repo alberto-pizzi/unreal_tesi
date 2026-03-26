@@ -29,6 +29,9 @@ class Genders(Enum):
     FEMALE = "female"
     UNSPECIFIED = "unspecified"
 
+# maps for training (emotion recognition)
+LABEL2ID = {emotion.value: idx for idx, emotion in enumerate(Emotions)}
+ID2LABEL = {idx: emotion.value for idx, emotion in enumerate(Emotions)}
 
 
 CREMA_D_MAP = {
