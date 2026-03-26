@@ -107,28 +107,38 @@ if __name__ == "__main__":
 
             for animation_name in animation_sequence_asset_names:
                 c = c + 1
+                print(f"[STEP] Starting LS {c}: {animation_name}")
 
                 ls_name = get_ls_name(mh_name,animation_name)
+                print(f"[STEP] create_level_sequence")
                 ls = sequencer_manager.create_level_sequence(ls_name)
+                print(f"[STEP] open_level_sequence")
                 unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(ls)
+                print(f"[STEP] add_spawnable_actor_into_ls")
                 mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
-                #sequencer_manager.set_location_rotation_of_element(mh_binding,[0,0,0],[0,0,0],)
+                print(f"[STEP] add_body_movement")
+                sequencer_manager.add_body_movement(ls, mh_binding)
+                print(f"[STEP] attach_anim_sequence_to_face")
                 sequencer_manager.attach_anim_sequence_to_face(ls, animation_name)
+                print(f"[STEP] add_camera_into_sequencer")
                 camera_binding = sequencer_manager.add_camera_into_sequencer(ls, camera_locations_and_rotation_by_mh[mh_name][0],
                                                                              camera_locations_and_rotation_by_mh[mh_name][1])
+                print(f"[STEP] set_property_camera")
                 sequencer_manager.set_property_camera(ls, camera_settings, ls.get_playback_start(), ls.get_playback_end())
+                print(f"[STEP] add_cut_camera_into_sequencer")
                 sequencer_manager.add_cut_camera_into_sequencer(ls, camera_binding)
 
-
-
                 if MAKE_LS_WITH_AUDIO:
+                    print(f"[STEP] add_audio_track_into_sequencer")
                     audio_asset = sequencer_manager.get_audio_asset(animation_name)
                     sequencer_manager.add_audio_track_into_sequencer(ls,audio_asset)
 
+                print(f"[STEP] remove_face_control_rig_track")
                 sequencer_manager.remove_face_control_rig_track(ls)
 
-                #save
+                print(f"[STEP] save")
                 unreal.EditorAssetLibrary.save_loaded_asset(ls)
+                print(f"[STEP] done {c}")
 
         print("Generated ", c, " sequences!")
 
@@ -138,7 +148,7 @@ if __name__ == "__main__":
         print(ls_names)
 
         for ls_name in ls_names:
-            rendering.import_ls_into_mrq(ls_name,QUEUE_NAME)
+            rendering.import_ls_into_mrq(ls_name)
 
 
 
