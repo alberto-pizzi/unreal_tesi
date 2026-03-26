@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from audio_dataset_classes import *
 from typing import Type
 
@@ -5,7 +7,6 @@ DATASET_TYPE = {
     "RAVDESS": Dataset_RAVDESS,
     "CREMA-D": Dataset_CREMA_D,
 }
-
 
 def process_audio_to_AudioInfo(paths: list[Path],DatasetClass:Type[AudioDatasetParser]) -> list[AudioInfo]:
     audio_processed = []
@@ -41,7 +42,7 @@ def limit_AudioInfo(AudioInfo_list:list[AudioInfo], max_value_by_parameter:int, 
     if not max_value_by_parameter or not class_field_name:
         return AudioInfo_list
 
-    groups = {}
+    groups = defaultdict(list)
 
     # group by
     for item in AudioInfo_list:
