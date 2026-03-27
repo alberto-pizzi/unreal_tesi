@@ -78,7 +78,7 @@ if __name__ == "__main__":
         delete_all_assets_into_directory(ANIMATION_PATH)
         ls = sequencer_manager.create_level_sequence("BakingSequence", TMP_LS_BASE_PATH)
         unreal.LevelSequenceEditorBlueprintLibrary.open_level_sequence(ls)
-        mh_class = sequencer_manager.load_actor_class(METAHUMANS_INSTALLED[0])
+        mh_class = sequencer_manager.load_actor_class(METAHUMANS_INSTALLED[0].mh_name)
         for csv_path in csv_paths:
             sequencer_manager.clear_sequencer(ls)
             mh_binding = sequencer_manager.add_spawnable_actor_into_ls(ls, mh_class)
@@ -99,17 +99,17 @@ if __name__ == "__main__":
 
     if GENERATE_LS_FOREACH_MH:
         camera_locations_and_rotation_by_mh = sequencer_manager.get_actor_cams_locations_and_rotations(
-            METAHUMANS_INSTALLED)
+            [mh.mh_name for mh in METAHUMANS_INSTALLED])
 
         c = 0
-        for mh_name in METAHUMANS_INSTALLED:
-            mh_class = sequencer_manager.load_actor_class(mh_name)
+        for mh in METAHUMANS_INSTALLED:
+            mh_class = sequencer_manager.load_actor_class(mh.mh_name)
 
             for animation_name in animation_sequence_asset_names:
                 c = c + 1
                 print(f"[STEP] Starting LS {c}: {animation_name}")
 
-                ls_name = get_ls_name(mh_name,animation_name)
+                ls_name = get_ls_name(mh.mh_name,animation_name)
                 print(f"[STEP] create_level_sequence")
                 ls = sequencer_manager.create_level_sequence(ls_name)
                 print(f"[STEP] open_level_sequence")
@@ -121,8 +121,8 @@ if __name__ == "__main__":
                 print(f"[STEP] attach_anim_sequence_to_face")
                 sequencer_manager.attach_anim_sequence_to_face(ls, animation_name)
                 print(f"[STEP] add_camera_into_sequencer")
-                camera_binding = sequencer_manager.add_camera_into_sequencer(ls, camera_locations_and_rotation_by_mh[mh_name][0],
-                                                                             camera_locations_and_rotation_by_mh[mh_name][1])
+                camera_binding = sequencer_manager.add_camera_into_sequencer(ls, camera_locations_and_rotation_by_mh[mh.mh_name][0],
+                                                                             camera_locations_and_rotation_by_mh[mh.mh_name][1])
                 print(f"[STEP] set_property_camera")
                 sequencer_manager.set_property_camera(ls, camera_settings, ls.get_playback_start(), ls.get_playback_end())
                 print(f"[STEP] add_cut_camera_into_sequencer")

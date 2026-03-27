@@ -1,3 +1,5 @@
+from mh_classes import *
+
 # CONFIG FILE
 
 # IMPORTANT :Unreal accepts ONLY paths UNIX-like
@@ -42,10 +44,10 @@ LEVEL_NAME = "BaseLevel"
 # insert ONLY MetaHumans installed into project
 # TODO to be completed
 METAHUMANS_INSTALLED = [
-    "Bryan",
-    "Myles",
-    "Zeva",
-    "Bernice",
+    MetaHuman("Bryan", dae.EthnicGroup.AFRO,dae.AgeCategory.YOUNG_ADULT,dae.Genders.MALE),
+    MetaHuman("Myles",dae.EthnicGroup.EAST_ASIAN,dae.AgeCategory.ADULT,dae.Genders.MALE),
+    MetaHuman("Zeva",dae.EthnicGroup.AFRO,dae.AgeCategory.ADULT,dae.Genders.FEMALE),
+    MetaHuman("Bernice",dae.EthnicGroup.EAST_ASIAN,dae.AgeCategory.ADULT,dae.Genders.FEMALE),
 
 ]
 
