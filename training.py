@@ -19,6 +19,7 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
 
+import data_enums
 
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
@@ -87,7 +88,7 @@ class FrameDataset(Dataset):
         self.frame_dirs = []
         self.labels = []
 
-        for label_name in adp.d_maps.Emotions:
+        for label_name in data_enums.Emotions:
             emotion_label = label_name.value
             emotion_id = adp.d_maps.LABEL2ID[label_name.value]
 
@@ -133,6 +134,7 @@ def create_dataloader(root_dir, batch_size=2, shuffle=True, transform=None):
 
 def build_resnet_model(num_classes):
     resnet = models.resnet18(pretrained=True)
+    #nn.stm
     resnet.fc = nn.Linear(resnet.fc.in_features, num_classes)  # edit last layer
     resnet = resnet.to(device)
     return resnet
@@ -241,7 +243,7 @@ def predict_emotion(model, video_folder_path, transform, max_frames=16):
     return emotion_idx, confidence
 
 def make_inference(model_checkpoint_dir:str,new_video_directory:str, transform):
-    num_classes = len(adp.d_maps.Emotions)
+    num_classes = len(data_enums.Emotions)
     model = build_resnet_model(num_classes)
     model.load_state_dict(torch.load(Path(model_checkpoint_dir)))
     model.to(device)
@@ -270,7 +272,7 @@ def get_transform():
     return transform
 
 def load_previous_model(model_checkpoint_dir:str):
-    num_classes = len(adp.d_maps.Emotions)
+    num_classes = len(data_enums.Emotions)
     model = build_resnet_model(num_classes)
     model.load_state_dict(torch.load(Path(model_checkpoint_dir)))
     model.to(device)
@@ -303,7 +305,7 @@ if __name__ == "__main__":
     print(f"Num batches: {len(dataloader)}")
 
 
-    num_classes = len(adp.d_maps.Emotions)
+    num_classes = len(data_enums.Emotions)
     print(f"Num emotions: {num_classes}")
 
     model = build_resnet_model(num_classes)

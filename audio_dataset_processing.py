@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import data_enums
 from audio_dataset_classes import *
 from typing import Type
 
@@ -17,7 +18,7 @@ def process_audio_to_AudioInfo(paths: list[Path],DatasetClass:Type[AudioDatasetP
 
     return audio_processed
 
-def get_emotion_label_for_training(folder_name: str,DatasetClass:Type[AudioDatasetParser]) -> d_maps.Emotions:
+def get_emotion_label_for_training(folder_name: str,DatasetClass:Type[AudioDatasetParser]) -> data_enums.Emotions:
     instance = DatasetClass()
     return instance.get_emotion_label(folder_name)
 

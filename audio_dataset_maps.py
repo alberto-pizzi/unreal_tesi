@@ -1,33 +1,6 @@
-from enum import Enum
+from data_enums import Emotions, Intensity, AudioInfoEnum, Genders
 
-class Emotions(Enum):
-    HAPPY = "happy"
-    SAD = "sad"
-    ANGRY = "angry"
-    NEUTRAL = "neutral"
-    FEAR = "fear"
-    DISGUST = "disgust"
-    CALM = "calm"
-    SURPRISED = "surprised"
 
-class Intensity(Enum):
-    NORMAL = "normal"
-    HIGH = "high"
-    LOW = "low"
-    UNSPECIFIED = "unspecified"
-
-# TODO add lambda?
-class AudioInfoEnum(Enum):
-    ACTOR = "actor"
-    SENTENCE = "sentence"
-    EMOTIONS = "emotions"
-    INTENSITY = "intensity"
-    GENRE = "genre"
-
-class Genders(Enum):
-    MALE = "male"
-    FEMALE = "female"
-    UNSPECIFIED = "unspecified"
 
 # maps for training (emotion recognition)
 LABEL2ID = {emotion.value: idx for idx, emotion in enumerate(Emotions)}

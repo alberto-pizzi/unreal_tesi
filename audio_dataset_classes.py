@@ -5,16 +5,17 @@ from pathlib import Path
 import audio_dataset_maps as d_maps
 import csv
 
+import data_enums
 
 
 @dataclass
 class AudioInfo:
     path: Path
     actor: str
-    emotion: d_maps.Emotions
+    emotion: data_enums.Emotions
     sentence: str
-    gender: d_maps.Genders = d_maps.Genders.UNSPECIFIED
-    intensity: d_maps.Intensity = d_maps.Intensity.UNSPECIFIED
+    gender: data_enums.Genders = data_enums.Genders.UNSPECIFIED
+    intensity: data_enums.Intensity = data_enums.Intensity.UNSPECIFIED
     extra: Dict[str, Any] = None
 
 
@@ -22,20 +23,20 @@ class AudioInfo:
 
 # abstract class
 class AudioDatasetParser(ABC):
-    MAP: Dict[d_maps.AudioInfoEnum, Any] = {}
+    MAP: Dict[data_enums.AudioInfoEnum, Any] = {}
 
     @abstractmethod
     def parse(self, filename_path: Path) -> AudioInfo:
         pass
 
     @abstractmethod
-    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+    def get_emotion_label(self, folder_name: str) -> data_enums.Emotions:
         pass
 
 
     def decode_info(self, emotion_encoded,intensity_encoded):
-        emotion_decoded = self.MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_encoded]
-        intensity_decoded = self.MAP[d_maps.AudioInfoEnum.INTENSITY][intensity_encoded]
+        emotion_decoded = self.MAP[data_enums.AudioInfoEnum.EMOTIONS][emotion_encoded]
+        intensity_decoded = self.MAP[data_enums.AudioInfoEnum.INTENSITY][intensity_encoded]
         return emotion_decoded, intensity_decoded
 
 
@@ -62,10 +63,10 @@ class Dataset_CREMA_D(AudioDatasetParser):
 
         csv_gender = data[int(actor_encoded)-1001]["Sex"]
 
-        if csv_gender in d_maps.CREMA_D_MAP[d_maps.AudioInfoEnum.GENRE]:
-            gender = d_maps.CREMA_D_MAP[d_maps.AudioInfoEnum.GENRE][csv_gender]
+        if csv_gender in d_maps.CREMA_D_MAP[data_enums.AudioInfoEnum.GENRE]:
+            gender = d_maps.CREMA_D_MAP[data_enums.AudioInfoEnum.GENRE][csv_gender]
         else:
-            gender = d_maps.Genders.UNSPECIFIED
+            gender = data_enums.Genders.UNSPECIFIED
 
 
         return AudioInfo(path=filename_path, actor=actor_encoded, emotion=emotion_decoded, sentence=sentence_encoded, intensity=intensity_decoded, gender=gender)
@@ -82,12 +83,12 @@ class Dataset_CREMA_D(AudioDatasetParser):
                 actors.append(row)
         return actors
 
-    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+    def get_emotion_label(self, folder_name: str) -> data_enums.Emotions:
         split = folder_name.split("_")
 
         emotion_detected = split[3]
 
-        return  d_maps.CREMA_D_MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_detected]
+        return  d_maps.CREMA_D_MAP[data_enums.AudioInfoEnum.EMOTIONS][emotion_detected]
 
 
 
@@ -107,17 +108,17 @@ class Dataset_RAVDESS(AudioDatasetParser):
 
         # from documentation
         if int(actor_encoded) % 2 == 0:
-            gender = d_maps.Genders.FEMALE
+            gender = data_enums.Genders.FEMALE
         else:
-            gender = d_maps.Genders.MALE
+            gender = data_enums.Genders.MALE
 
 
         return AudioInfo(path=filename_path, actor=actor_encoded, emotion=emotion_decoded, sentence=sentence_encoded, intensity=intensity_decoded,gender=gender)
 
 
-    def get_emotion_label(self, folder_name: str) -> d_maps.Emotions:
+    def get_emotion_label(self, folder_name: str) -> data_enums.Emotions:
         split = folder_name.split("-")
 
         emotion_detected = split[3]
 
-        return d_maps.RAVDESS_MAP[d_maps.AudioInfoEnum.EMOTIONS][emotion_detected]
+        return d_maps.RAVDESS_MAP[data_enums.AudioInfoEnum.EMOTIONS][emotion_detected]
