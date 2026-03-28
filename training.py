@@ -18,13 +18,15 @@ import numpy as np
 import torch.nn as nn
 import torchvision.models as models
 import torch.optim as optim
+import os
 
 import data_enums
 
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
 # destination training directory (where the videos will be copied and organized automatically)
-training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
+#training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
+training_base_directory = "C:/Users/alber/Desktop/ProvaLink/output"
 #training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb"
 
 videos_path = Path(videos_directory)
@@ -51,22 +53,22 @@ def create_training_directory(DatasetClass:Type[adp.AudioDatasetParser]):
 
     video_folders = get_video_folders(videos_path)
 
-    train_path.mkdir(exist_ok=True)
-    val_path.mkdir(exist_ok=True)
-
     for video_folder in video_folders:
-        emotion_label = adp.get_emotion_label_for_training(video_folder.stem, DatasetClass)
+        if video_folder.is_dir():
+            emotion_label = adp.get_emotion_label_for_training(video_folder.stem, DatasetClass)
 
-        emotion_label_training_path = train_path / emotion_label.value
-        emotion_label_validation_path = train_path / emotion_label.value
-        emotion_label_test_path = test_path / emotion_label.value
+            emotion_label_training_path = train_path / emotion_label.value
+            emotion_label_validation_path = train_path / emotion_label.value
+            emotion_label_test_path = test_path / emotion_label.value
 
-        emotion_label_training_path.mkdir(exist_ok=True)
-        emotion_label_validation_path.mkdir(exist_ok=True)
-        emotion_label_test_path.mkdir(exist_ok=True)
+            emotion_label_training_path.mkdir(parents=True,exist_ok=True)
+            emotion_label_validation_path.mkdir(parents=True,exist_ok=True)
+            emotion_label_test_path.mkdir(parents=True,exist_ok=True)
 
-        #TODO add validation dir?
-        shutil.copytree(video_folder, emotion_label_training_path / video_folder.stem, dirs_exist_ok=True)
+            # create symlink to folder
+            #TODO add validation dir?
+            new_emo_dir = emotion_label_training_path / video_folder.stem
+            os.symlink(video_folder, new_emo_dir, target_is_directory=True)
 
     print("Training directory created")
 
