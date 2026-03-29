@@ -11,12 +11,6 @@ from PIL import Image
 import numpy as np
 import audio_dataset_processing as adp
 
-class ModelType(Enum):
-    RESNET = "resnet"
-    RESNET_LSTM = "resnet_lstm"
-    CONV3D = "conv3d"
-    VIDEO_TRANSFORMER = "video_transformer"
-
 
 def uniform_sampling(num_frames,max_frames):
     if num_frames >= max_frames:
@@ -26,16 +20,39 @@ def uniform_sampling(num_frames,max_frames):
 
     return indices
 
+def consecutive_sampling(num_frames, max_frames):
+    if num_frames >= max_frames:
+        start = np.random.randint(0, num_frames - max_frames + 1)
+        return list(range(start, start + max_frames))
+    else:
+        return list(range(num_frames)) + [num_frames - 1] * (max_frames - num_frames)
+
+class SamplingType(Enum):
+    UNIFORM = "uniform"
+    RANDOM = "random"
+    CONSECUTIVE = "consecutive"
+
+# TODO is that right pos?
+sampling_map = {
+    SamplingType.UNIFORM: uniform_sampling,
+    #SamplingType.RANDOM: random_sampling,
+    SamplingType.CONSECUTIVE: consecutive_sampling
+}
+
 # frame dataset with different lengths handling
 class FrameDataset(Dataset):
-    def __init__(self, root_dir, transform=None, max_frames=16):
+    def __init__(self, root_dir, transform=None, max_frames=16,sampling_type=SamplingType.UNIFORM):
         self.root_dir = Path(root_dir)
         self.transform = transform if transform else transforms.ToTensor()
         self.max_frames = max_frames
 
+        #TODO sampling map needed?
+        self.sampling_fn = sampling_map[sampling_type]
+
         self.frame_dirs = []
         self.labels = []
 
+        # labeling
         for label_name in data_enums.Emotions:
             emotion_label = label_name.value
             emotion_id = adp.d_maps.LABEL2ID[label_name.value]
@@ -56,8 +73,10 @@ class FrameDataset(Dataset):
         frame_paths = sorted(frame_folder.glob("*.png"))
         num_frames = len(frame_paths)
 
+
         # uniform sampling
-        indices = uniform_sampling(num_frames, self.max_frames)
+        #indices = uniform_sampling(num_frames, self.max_frames) #TODO replace?
+        indices = self.sampling_fn(num_frames, self.max_frames)
 
         frames = []
         for i in indices:
@@ -71,21 +90,3 @@ class FrameDataset(Dataset):
         # no need to permute, we want [T, C, H, W] for batch -> [batch, T, C, H, W]
         label = self.labels[idx]
         return video_tensor, label
-
-class ResNetFrameModel(nn.Module):
-    def __init__(self,num_classes:int):
-        super().__init__()
-        self.resnet = models.resnet18(pretrained=True)
-        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
-        # device not needed
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # B = batch size ; T = number of frame per video
-        B, T, C, H, W = x.shape
-        x = x.view(B*T, C, H, W)
-        out = self.resnet(x)
-        out = out.view(B, T, -1) # with -1 PyTorch calculate remaining dimension automatically
-        out = out.mean(dim=1) #average on frames
-
-        return out

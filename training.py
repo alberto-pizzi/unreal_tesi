@@ -6,7 +6,9 @@ from typing import Type
 import os
 
 import data_enums
-from training_classes import *
+from training_model_classes import *
+from training_maps import *
+from training_datasets_classes import *
 
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
@@ -117,7 +119,7 @@ def train_model(
         # save best model
         if avg_loss < best_loss:
             best_loss = avg_loss
-            new_path = saved_models_dir / f'best_emotion_model_epoch{epoch + 1}.pth'
+            new_path = saved_models_dir / f'{model.model_type.value}_best_model_epoch_{epoch + 1}.pth'
             torch.save(model.state_dict(), new_path)
             print(f"BEST MODEL SAVED! Epoch {epoch + 1}, Loss: {avg_loss:.4f}")
         else:
@@ -221,6 +223,10 @@ def train_from_checkpoint(model_checkpoint_dir:str,new_data_path,num_epochs:int)
 
     return train_model(model=model,criterion=criterion,optimizer=optimizer,dataloader=new_dataloader,num_epochs=num_epochs,transform=transform)
 
+# TODO implement
+def create_model(model_type, num_classes):
+    model = model_map[model_type](num_classes)
+    return model.to(device)
 
 if __name__ == "__main__":
 
@@ -230,7 +236,8 @@ if __name__ == "__main__":
     # data augmentation
     transform = get_transform()
 
-    dataloader = create_dataloader(root, batch_size=8, transform=transform)
+    #dataloader = create_dataloader(root, batch_size=8, transform=transform)
+    dataloader = DataLoader(FrameDataset(root,transform,sampling_type=SamplingType.CONSECUTIVE), batch_size=8, shuffle=True)
 
     print(f"Dataset size: {len(dataloader.dataset)}")
     print(f"Num batches: {len(dataloader)}")
@@ -239,7 +246,8 @@ if __name__ == "__main__":
     num_classes = len(data_enums.Emotions)
     print(f"Num emotions: {num_classes}")
 
-    model = ResNetFrameModel(num_classes)
+    #model = ResNetFrameModel(num_classes)
+    model = Conv3DModel(num_classes)
     model.to(device)
 
     # loss and optimizer definition

@@ -1,0 +1,74 @@
+from enum import Enum
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+import data_enums
+from pathlib import Path
+import torch.nn as nn
+import torchvision.models as models
+import torch.optim as optim
+import torch
+from PIL import Image
+import numpy as np
+import audio_dataset_processing as adp
+
+class ModelType(Enum):
+    RESNET = "resnet"
+    RESNET_LSTM = "resnet_lstm"
+    CONV3D = "conv3d"
+    VIDEO_TRANSFORMER = "video_transformer"
+
+
+class ResNetFrameModel(nn.Module):
+    model_type = ModelType.RESNET
+
+    def __init__(self,num_classes:int):
+        super().__init__()
+        self.resnet = models.resnet18(pretrained=True)
+        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
+        # device not needed
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # B = batch size ; T = number of frame per video
+        B, T, C, H, W = x.shape
+        x = x.reshape(B*T, C, H, W)
+        out = self.resnet(x)
+        out = out.reshape(B, T, -1) # with -1 PyTorch calculate remaining dimension automatically
+        out = out.mean(dim=1) #average on frames
+
+        return out
+
+class ResNetLSTMModel(nn.Module):
+    model_type = ModelType.RESNET_LSTM
+
+    def __init__(self, num_classes, lstm_hidden_size=256, lstm_layers=1):
+        super().__init__()
+        self.resnet = models.resnet18(pretrained=True)
+        self.resnet.fc = nn.Identity()  # take feature vector [B*T, 512]
+        self.lstm = nn.LSTM(input_size=512, hidden_size=lstm_hidden_size, num_layers=lstm_layers, batch_first=True)
+        self.fc = nn.Linear(lstm_hidden_size, num_classes)
+
+    def forward(self, x):
+        # x: [B, T, C, H, W]
+        B, T, C, H, W = x.shape
+        x = x.reshape(B*T, C, H, W)
+        features = self.resnet(x)        # [B*T, 512]
+        features = features.reshape(B, T, -1)  # [B, T, 512]
+        lstm_out, _ = self.lstm(features)   # [B, T, hidden_size]
+        #out = lstm_out[:, -1, :]            # uses last time-step
+        out = lstm_out.mean(dim=1)
+        out = self.fc(out)                   # [B, num_classes]
+        return out
+
+class Conv3DModel(nn.Module):
+    model_type = ModelType.CONV3D
+
+    def __init__(self, num_classes):
+        super().__init__()
+        self.model = models.video.r3d_18(pretrained=True)
+        self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
+
+    def forward(self, x):
+        # x: [B, T, C, H, W]
+        x = x.permute(0, 2, 1, 3, 4).contiguous()  # -> [B, C, T, H, W]
+        return self.model(x)
