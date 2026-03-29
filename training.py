@@ -25,8 +25,8 @@ import data_enums
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
 # destination training directory (where the videos will be copied and organized automatically)
-#training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
-training_base_directory = "C:/Users/alber/Desktop/ProvaLink/output"
+training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
+#training_base_directory = "C:/Users/alber/Desktop/ProvaLink/output"
 #training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb"
 
 videos_path = Path(videos_directory)
@@ -126,8 +126,26 @@ class FrameDataset(Dataset):
         label = self.labels[idx]
         return video_tensor, label
 
+class ResNetFrameModel(nn.Module):
+    def __init__(self,num_classes:int):
+        super().__init__()
+        self.resnet = models.resnet18(pretrained=True)
+        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
+        # device not needed
 
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # B = batch size ; T = number of frame per video
+        B, T, C, H, W = x.shape
+        x = x.view(B*T, C, H, W)
+        out = self.resnet(x)
+        out = out.view(B, T, -1) # with -1 PyTorch calculate remaining dimension automatically
+        out = out.mean(dim=1) #average on frames
+
+        return out
+
+
+# TODO is it useful?
 def create_dataloader(root_dir, batch_size=2, shuffle=True, transform=None):
     dataset = FrameDataset(root_dir, transform)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
@@ -153,7 +171,7 @@ def train_model(
     criterion,
     optimizer,
     dataloader,
-    num_epochs: int = 10,
+    num_epochs: int,
     print_epoch_window:int = 10
 ):
 
@@ -165,13 +183,11 @@ def train_model(
         running_loss = 0.0
 
         for batch_idx, (batch_videos, batch_labels) in enumerate(dataloader):
-            batch_videos = batch_videos.to(device)
+            batch_videos = batch_videos.to(device)  # [B, T, C, H, W]
             batch_labels = batch_labels.to(device)
 
-            # frame-level predictions
-            frame_preds = frame_voting(model, batch_videos)
-
-            outputs = torch.stack(frame_preds).mean(dim=0)  # frame voting
+            # it calls forward method
+            outputs = model(batch_videos)
             loss = criterion(outputs, batch_labels)
 
             optimizer.zero_grad()
@@ -209,8 +225,8 @@ def evaluate_model(model, dataloader):
             batch_videos = batch_videos.to(device)
             labels = labels.to(device)
 
-            frame_preds = frame_voting(model, batch_videos)
-            outputs = torch.stack(frame_preds).mean(dim=0)
+            #it calls forward method
+            outputs = model(batch_videos)
 
             pred = outputs.argmax(dim=1)
 
@@ -275,7 +291,7 @@ def get_transform():
 
 def load_previous_model(model_checkpoint_dir:str):
     num_classes = len(data_enums.Emotions)
-    model = build_resnet_model(num_classes)
+    model = build_resnet_model(num_classes) # TODO extend models
     model.load_state_dict(torch.load(Path(model_checkpoint_dir)))
     model.to(device)
 
@@ -310,7 +326,10 @@ if __name__ == "__main__":
     num_classes = len(data_enums.Emotions)
     print(f"Num emotions: {num_classes}")
 
-    model = build_resnet_model(num_classes)
+    model = ResNetFrameModel(num_classes)
+    model.to(device)
+
+    # loss and optimizer definition
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
