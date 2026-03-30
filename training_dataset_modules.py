@@ -27,6 +27,15 @@ def consecutive_sampling(num_frames, max_frames):
     else:
         return list(range(num_frames)) + [num_frames - 1] * (max_frames - num_frames)
 
+def random_sampling(num_frames, max_frames):
+    if num_frames >= max_frames:
+        # takes max_frames frame random with no repetitions
+        indices = np.random.choice(num_frames, size=max_frames, replace=False)
+        return sorted(indices)  # orders to hold temporal order
+    else:
+        # if video is shorter, pad with last frame
+        return list(range(num_frames)) + [num_frames - 1] * (max_frames - num_frames)
+
 class SamplingType(Enum):
     UNIFORM = "uniform"
     RANDOM = "random"
