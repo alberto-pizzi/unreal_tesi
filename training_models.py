@@ -12,11 +12,12 @@ import numpy as np
 import audio_dataset_processing as adp
 from torchvision.models.video import mvit_v2_s, r3d_18, R3D_18_Weights
 
+# WARNING: use ONLY strings written as a single word, without spaces or special characters
 class ModelType(Enum):
     RESNET = "resnet"
-    RESNET_LSTM = "resnet_lstm"
+    RESNET_LSTM = "resnetlstm"
     CONV3D = "conv3d"
-    VIDEO_TRANSFORMER = "video_transformer"
+    VIDEO_TRANSFORMER = "videotransformer"
 
 
 class ResNetFrameModel(nn.Module):

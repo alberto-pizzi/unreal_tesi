@@ -155,41 +155,35 @@ def evaluate_model(model, dataloader):
     accuracy = correct / total
     return accuracy
 
-def predict_emotion(model, video_folder_path, transform, max_frames=16):
+def predict_emotion(model, video_folder_path, transform, device, max_frames=16):
+    model.eval()
 
-    dataset = FrameDataset(str(video_folder_path), transform=transform, max_frames=max_frames)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+    # load video
+    video = load_video_frames(video_folder_path, transform, max_frames)
 
-    model.eval()  # inference mod
-    predictions = []
+    # [B=1, T, C, H, W]
+    video = video.unsqueeze(0).to(device)
 
-    with torch.no_grad():  # no gradient
-        for batch_videos, _ in dataloader:  # ignore label (new video)
-            batch_videos = batch_videos.to(device)
+    with torch.no_grad():
+        outputs = model(video) 
 
-            # same training frame voting
-            frame_preds = frame_voting(model, batch_videos)
+    pred = outputs.argmax(dim=1).item()
+    confidence = torch.softmax(outputs, dim=1).max().item()
 
-            video_pred = torch.stack(frame_preds).mean(dim=0)
-            predictions.append(video_pred)
+    return pred, confidence
 
-    final_pred = torch.stack(predictions).mean(dim=0)
-    emotion_idx = final_pred.argmax().item()
-    confidence = torch.softmax(final_pred, dim=0).max().item()
+def make_inference(model_checkpoint_path: str, new_video_directory: str, transform):
+    model = load_previous_model(model_checkpoint_path)
+    model.to(device)
 
-    return emotion_idx, confidence
+    emotion_id, confidence = predict_emotion(
+        model,
+        new_video_directory,
+        transform,
+        device
+    )
 
-def make_inference(model_checkpoint_dir:str,new_video_directory:str, transform):
-    model = load_previous_model(model_checkpoint_dir)
-
-    new_video_path = Path(new_video_directory)
-    # prediction
-    emotion_id, confidence = predict_emotion(model, new_video_path, transform, device)
-
-    emotion_name = adp.d_maps.ID2LABEL[emotion_id]
-
-    if not emotion_name:
-        emotion_name = "Emotion not found!"
+    emotion_name = adp.d_maps.ID2LABEL.get(emotion_id, "Emotion not found!")
 
     print(f"Emotion: {emotion_name}")
     print(f"Confidence: {confidence:.2%}")
@@ -272,4 +266,4 @@ if __name__ == "__main__":
     # inference
     new_video_directory = ""
     model_checkpoint_dir = ""
-    #make_inference(model_checkpoint_dir,new_video_directory,transform, device)
+    #make_inference(model_checkpoint_dir,new_video_directory,transform)
