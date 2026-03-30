@@ -59,20 +59,24 @@ def create_training_directory(DatasetClass:Type[adp.AudioDatasetParser]):
 
     print("Training directory created")
 
+def create_model_filename(model_name:str, epoch:str) -> str:
+    return f'{model_name}_best_model_epoch_{epoch}.pth'
 
-# TODO is it useful?
-def create_dataloader(root_dir, batch_size=2, shuffle=True, transform=None):
-    dataset = FrameDataset(root_dir, transform)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+def get_model_type_by_filename(filename:str):
+    splits = filename.split("_")
 
+    model_name = splits[0]
 
+    try:
+        return ModelType(model_name)
+    except ValueError:
+        return  None
 
-def build_resnet_model(num_classes):
-    resnet = models.resnet18(pretrained=True)
-    #nn.stm
-    resnet.fc = nn.Linear(resnet.fc.in_features, num_classes)  # edit last layer
-    resnet = resnet.to(device)
-    return resnet
+def build_model(model_type:ModelType, num_classes:int):
+    model_class = model_map[model_type]
+    model = model_class(num_classes)
+
+    return model
 
 def frame_voting(model,batch_videos):
     frame_preds = []
@@ -119,7 +123,7 @@ def train_model(
         # save best model
         if avg_loss < best_loss:
             best_loss = avg_loss
-            new_path = saved_models_dir / f'{model.model_type.value}_best_model_epoch_{epoch + 1}.pth'
+            new_path = saved_models_dir / create_model_filename(model.model_type.value, str(epoch + 1))
             torch.save(model.state_dict(), new_path)
             print(f"BEST MODEL SAVED! Epoch {epoch + 1}, Loss: {avg_loss:.4f}")
         else:
@@ -176,10 +180,7 @@ def predict_emotion(model, video_folder_path, transform, max_frames=16):
     return emotion_idx, confidence
 
 def make_inference(model_checkpoint_dir:str,new_video_directory:str, transform):
-    num_classes = len(data_enums.Emotions)
-    model = build_resnet_model(num_classes)
-    model.load_state_dict(torch.load(Path(model_checkpoint_dir)))
-    model.to(device)
+    model = load_previous_model(model_checkpoint_dir)
 
     new_video_path = Path(new_video_directory)
     # prediction
@@ -206,27 +207,20 @@ def get_transform():
 
 def load_previous_model(model_checkpoint_dir:str):
     num_classes = len(data_enums.Emotions)
-    model = build_resnet_model(num_classes) # TODO extend models
-    model.load_state_dict(torch.load(Path(model_checkpoint_dir)))
+    checkpoint_path = Path(model_checkpoint_dir)
+    checkpoint_name = checkpoint_path.stem
+
+    model_type = get_model_type_by_filename(checkpoint_name)
+
+    if not model_type:
+        raise Exception("No model detected in: ", checkpoint_path)
+
+    model = build_model(model_type,num_classes)
+    model.load_state_dict(torch.load(checkpoint_path))
     model.to(device)
 
+
     return model
-
-def train_from_checkpoint(model_checkpoint_dir:str,new_data_path,num_epochs:int):
-    model = load_previous_model(model_checkpoint_dir)
-
-    transform = get_transform()
-    new_dataloader = create_dataloader(new_data_path, batch_size=8)
-
-    optimizer = optim.Adam(model.parameters(), lr=1e-5)
-    criterion = nn.CrossEntropyLoss()
-
-    return train_model(model=model,criterion=criterion,optimizer=optimizer,dataloader=new_dataloader,num_epochs=num_epochs,transform=transform)
-
-# TODO implement
-def create_model(model_type, num_classes):
-    model = model_map[model_type](num_classes)
-    return model.to(device)
 
 if __name__ == "__main__":
 
@@ -236,8 +230,10 @@ if __name__ == "__main__":
     # data augmentation
     transform = get_transform()
 
+    sampling_type = SamplingType.CONSECUTIVE
+
     #dataloader = create_dataloader(root, batch_size=8, transform=transform)
-    dataloader = DataLoader(FrameDataset(root,transform,sampling_type=SamplingType.CONSECUTIVE), batch_size=8, shuffle=True)
+    dataloader = DataLoader(FrameDataset(root,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
     print("Sampling type: ",dataloader.dataset.sampling_type.value)
     print(f"Dataset size: {len(dataloader.dataset)}")
@@ -268,7 +264,8 @@ if __name__ == "__main__":
         num_epochs=num_epochs,
     )
 
-    test_dataloader = create_dataloader(test_path, batch_size=8, transform=transform)
+    test_dataloader = DataLoader(FrameDataset(test_path,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
+
     test_accuracy = evaluate_model(model=trained_model, dataloader=test_dataloader)
     print(f"Test accuracy: {test_accuracy:.2%}")
 

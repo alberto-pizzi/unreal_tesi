@@ -41,7 +41,7 @@ class SamplingType(Enum):
     RANDOM = "random"
     CONSECUTIVE = "consecutive"
 
-# TODO is that right pos?
+
 sampling_map = {
     SamplingType.UNIFORM: uniform_sampling,
     #SamplingType.RANDOM: random_sampling,
@@ -55,7 +55,7 @@ class FrameDataset(Dataset):
         self.transform = transform if transform else transforms.ToTensor()
         self.max_frames = max_frames
 
-        #TODO sampling map needed?
+
         self.sampling_fn = sampling_map[sampling_type]
         self.sampling_type = sampling_type
 
@@ -84,8 +84,6 @@ class FrameDataset(Dataset):
         num_frames = len(frame_paths)
 
 
-        # uniform sampling
-        #indices = uniform_sampling(num_frames, self.max_frames) #TODO replace?
         indices = self.sampling_fn(num_frames, self.max_frames)
 
         frames = []
