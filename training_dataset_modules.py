@@ -98,3 +98,26 @@ class FrameDataset(Dataset):
         # no need to permute, we want [T, C, H, W] for batch -> [batch, T, C, H, W]
         label = self.labels[idx]
         return video_tensor, label
+
+
+def load_video_frames(videoframes_folder_path, transform=None, max_frames=16, sampling_fn=uniform_sampling):
+    frame_paths = sorted(Path(videoframes_folder_path).glob("*.png"))
+    num_frames = len(frame_paths)
+
+    if num_frames == 0:
+        raise ValueError("No frame found")
+
+    # 🔹 consecutive sampling (consigliato per tutti i tuoi modelli)
+    indices = sampling_fn(num_frames, max_frames)
+
+    frames = []
+    for i in indices:
+        img = Image.open(frame_paths[i]).convert("RGB")
+        if transform:
+            img = transform(img)
+        else:
+            img = torch.tensor(np.array(img)).permute(2, 0, 1) / 255.0 # tensor = [C, H, W]
+        frames.append(img)
+
+    # [T, C, H, W]
+    return torch.stack(frames)
