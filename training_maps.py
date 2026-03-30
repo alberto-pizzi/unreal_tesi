@@ -1,4 +1,4 @@
-from training_model_classes import *
+from training_models import *
 
 model_map = {
     ModelType.RESNET: ResNetFrameModel,

@@ -6,9 +6,9 @@ from typing import Type
 import os
 
 import data_enums
-from training_model_classes import *
+from training_models import *
 from training_maps import *
-from training_datasets_classes import *
+from training_dataset_modules import *
 
 # all videos directory
 videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
