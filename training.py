@@ -239,6 +239,7 @@ if __name__ == "__main__":
     #dataloader = create_dataloader(root, batch_size=8, transform=transform)
     dataloader = DataLoader(FrameDataset(root,transform,sampling_type=SamplingType.CONSECUTIVE), batch_size=8, shuffle=True)
 
+    print("Sampling type: ",dataloader.dataset.sampling_type.value)
     print(f"Dataset size: {len(dataloader.dataset)}")
     print(f"Num batches: {len(dataloader)}")
 
@@ -250,12 +251,14 @@ if __name__ == "__main__":
     model = Conv3DModel(num_classes)
     model.to(device)
 
+    print("Model used: ", model.model_type.value)
+
     # loss and optimizer definition
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
-    num_epochs = 10  # number of epochs
+    num_epochs = 2  # number of epochs
 
     trained_model, train_losses, best_loss = train_model(
         model=model,

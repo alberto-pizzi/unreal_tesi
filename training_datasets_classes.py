@@ -48,6 +48,7 @@ class FrameDataset(Dataset):
 
         #TODO sampling map needed?
         self.sampling_fn = sampling_map[sampling_type]
+        self.sampling_type = sampling_type
 
         self.frame_dirs = []
         self.labels = []
