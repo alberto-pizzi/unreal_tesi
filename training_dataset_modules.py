@@ -44,7 +44,7 @@ class SamplingType(Enum):
 
 sampling_map = {
     SamplingType.UNIFORM: uniform_sampling,
-    #SamplingType.RANDOM: random_sampling,
+    SamplingType.RANDOM: random_sampling,
     SamplingType.CONSECUTIVE: consecutive_sampling
 }
 
