@@ -244,6 +244,7 @@ if __name__ == "__main__":
 
     num_epochs = 2  # number of epochs
 
+    # training
     trained_model, train_losses, best_loss = train_model(
         model=model,
         criterion=criterion,
@@ -252,12 +253,15 @@ if __name__ == "__main__":
         num_epochs=num_epochs,
     )
 
+    #evaluation
+
     test_dataloader = DataLoader(FrameDataset(test_path,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
     test_accuracy = evaluate_model(model=trained_model, dataloader=test_dataloader)
     print(f"Test accuracy: {test_accuracy:.2%}")
 
     # inference
+
     new_video_directory = ""
     model_checkpoint_dir = ""
     #make_inference(model_checkpoint_dir,new_video_directory,transform)
