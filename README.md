@@ -93,6 +93,24 @@ If you have all *Level Sequences*, you are able to render with MRQ. Let's distin
 
 - ***Level Sequences* generated with `main.py`**: if you set `IMPORT_ALL_LS_INTO_MRQ = True` into `config.py`, the **render queue asset file** previously created, will be populated.
 
+
+## How to setup to training
+
+Function allowed are only: **train**, **evaluate** and **inference**. So you should set main with operations needed.
+
+1. Install conda env importing `training_environment.yml`
+2. Open `training.py`
+3. Set paths at the beginning of the file
+4. Go into main (in the same file)
+5. Turn on or call `create_training_directory` for creating labeled directories for training and testing.
+6. Set `sampling_type`
+7. Set DataLoader call with own paramters as: `dataset`, `batch_size` and `shuffle`
+8. Set `model`, choosing right model class
+9. Set loss type (`criterion`) and `optimizer`
+10. Set `num_epochs`
+11. Call the right function based on the type of operation: `train_model(...)`, `evaluate_model(...)` or `make_inference(...)`
+12. Turn off or remove useless code lines
+
 ## Requirements
 
 - Unreal Engine 5.6 with Python API and Movie Render Queue Plugin, better with Windows 10/11 with complete compatibility.
