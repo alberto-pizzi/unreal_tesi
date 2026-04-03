@@ -103,7 +103,7 @@ Function allowed are only: **train**, **evaluate** and **inference**. So you sho
 3. Set paths at the beginning of the file
 4. If needed, set trasformations into `get_strasform()` or create new trasformations
 5. Go into main (in the same file)
-6. Turn on or call `create_training_directory` for creating labeled directories for training and testing.
+6. Turn on or call `create_training_directory`, at the beggining of main, for creating labeled directories for training and testing.
 7. Set `sampling_type`
 8. Set DataLoader call with own paramters as: `dataset`, `batch_size` and `shuffle`
 9. Set `model`, choosing right model class
