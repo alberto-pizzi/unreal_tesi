@@ -101,15 +101,16 @@ Function allowed are only: **train**, **evaluate** and **inference**. So you sho
 1. Install conda env importing `training_environment.yml`
 2. Open `training.py`
 3. Set paths at the beginning of the file
-4. Go into main (in the same file)
-5. Turn on or call `create_training_directory` for creating labeled directories for training and testing.
-6. Set `sampling_type`
-7. Set DataLoader call with own paramters as: `dataset`, `batch_size` and `shuffle`
-8. Set `model`, choosing right model class
-9. Set loss type (`criterion`) and `optimizer`
-10. Set `num_epochs`
-11. Call the right function based on the type of operation: `train_model(...)`, `evaluate_model(...)` or `make_inference(...)`
-12. Turn off or remove useless code lines
+4. If needed, set trasformations into `get_strasform()` or create new trasformations
+5. Go into main (in the same file)
+6. Turn on or call `create_training_directory` for creating labeled directories for training and testing.
+7. Set `sampling_type`
+8. Set DataLoader call with own paramters as: `dataset`, `batch_size` and `shuffle`
+9. Set `model`, choosing right model class
+10. Set loss type (`criterion`) and `optimizer`
+11. Set `num_epochs`
+12. Call the right function based on the type of operation: `train_model(...)`, `evaluate_model(...)` or `make_inference(...)`
+13. Turn off or remove useless code lines
 
 ## Requirements
 
