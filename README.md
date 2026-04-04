@@ -113,7 +113,7 @@ Function allowed are only: **train**, **evaluate** and **inference**. So you sho
 14. Turn off or remove useless code lines
 
 > [!IMPORTANT]
-> If you pass `val_dataloader` at `train_model(...)` function, it will also make evaluation for each apoch during training (useful for stats).
+> If you pass `val_dataloader` at `train_model(...)` function, it will also make evaluation for each apoch during training (useful for stats). Otherwise **leave blank**.
 > 
 ## Requirements
 
