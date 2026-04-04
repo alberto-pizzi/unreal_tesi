@@ -9,11 +9,14 @@ import data_enums
 from training_models import *
 from training_maps import *
 from training_dataset_modules import *
+import matplotlib.pyplot as plt
+from pathlib import Path
 
 # all videos directory
-videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
+#videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
+videos_directory = "C:/Users/alber/Desktop/TrainingDef/rgb_frames"
 # destination training directory (where the videos will be copied and organized automatically)
-training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset_accuracy/training_rgb/"
+training_base_directory = "C:/Users/alber/Desktop/TrainingDef/training_dir"
 #training_base_directory = "C:/Users/alber/Desktop/ProvaLink/output"
 #training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb"
 
@@ -78,24 +81,23 @@ def build_model(model_type:ModelType, num_classes:int):
 
     return model
 
-
-def train_model(
-    model,
-    criterion,
-    optimizer,
-    dataloader,
-    num_epochs: int,
-    print_epoch_window:int = 10
-):
+# WARNING: if you pass also val_dataloader as parameter, train_model will also make evaluation each epoch
+def train_model(model, criterion, optimizer, num_epochs: int, train_dataloader, val_dataloader=None,
+                print_epoch_window: int = 10):
 
     train_losses = []
+    train_accuracies = []
+    val_losses = []
+    val_accuracies = []
     best_loss = float('inf')
 
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
+        correct = 0
+        total = 0
 
-        for batch_idx, (batch_videos, batch_labels) in enumerate(dataloader):
+        for batch_idx, (batch_videos, batch_labels) in enumerate(train_dataloader):
             batch_videos = batch_videos.to(device)  # [B, T, C, H, W]
             batch_labels = batch_labels.to(device)
 
@@ -106,32 +108,48 @@ def train_model(
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
             running_loss += loss.item()
+            preds = outputs.argmax(dim=1)
+            correct += (preds == batch_labels).sum().item()
+            total += batch_labels.size(0)
 
-            if batch_idx % 1 == 0:
-                print(f'Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.4f}')
 
-        avg_loss = running_loss / len(dataloader)
-        train_losses.append(avg_loss)
+        avg_train_loss = running_loss / len(train_dataloader)
+        train_acc = correct / total
+        train_losses.append(avg_train_loss)
+        train_accuracies.append(train_acc)
+
+        # optional evaluation
+        if val_dataloader is not None:
+            val_loss, val_acc = evaluate_model(model, val_dataloader)
+            val_losses.append(val_loss)
+            val_accuracies.append(val_acc)
+        else:
+            val_loss, val_acc = None, None
+
+        print(f"Epoch {epoch+1}/{num_epochs} | "
+              f"Train Loss: {avg_train_loss:.4f}, Train Acc: {train_acc:.4f} | "
+              f"Val Loss: {val_loss if val_loss is not None else 'N/A'} | "
+              f"Val Acc: {val_acc if val_acc is not None else 'N/A'}")
 
         # save best model
-        if avg_loss < best_loss:
-            best_loss = avg_loss
-            new_path = saved_models_dir / create_model_filename(model.model_type.value, str(epoch + 1))
-            torch.save(model.state_dict(), new_path)
-            print(f"BEST MODEL SAVED! Epoch {epoch + 1}, Loss: {avg_loss:.4f}")
-        else:
-            print(f"Epoch {epoch + 1}/{num_epochs}, AVG Loss: {avg_loss:.4f}")
+        if avg_train_loss < best_loss:
+            best_loss = avg_train_loss
+            torch.save(model.state_dict(),
+                       saved_models_dir / create_model_filename(model.model_type.value, str(epoch + 1)))
+            print(f"BEST MODEL SAVED! Epoch {epoch+1}")
 
     print("TRAINING COMPLETED!")
     print(f"Best loss: {best_loss:.4f}")
-    return model, train_losses, best_loss
+    return model, train_losses, train_accuracies, val_losses, val_accuracies
 
 def evaluate_model(model, dataloader):
 
     model.eval()
     correct = 0
     total = 0
+    running_loss = 0.0
 
     with torch.no_grad():
         for batch_videos, labels in dataloader:
@@ -141,13 +159,18 @@ def evaluate_model(model, dataloader):
             #it calls forward method
             outputs = model(batch_videos)
 
+            loss = criterion(outputs, labels)
+            running_loss += loss.item() * labels.size(0)
+
             pred = outputs.argmax(dim=1)
 
             correct += (pred == labels).sum().item()
             total += labels.size(0)
 
+    avg_loss = running_loss / total
     accuracy = correct / total
-    return accuracy
+    return avg_loss,accuracy
+
 
 def predict_emotion(model, video_folder_path, transform, device, max_frames=16):
     model.eval()
@@ -210,6 +233,41 @@ def load_previous_model(model_checkpoint_dir:str):
 
     return model
 
+def draw_loss_graph(y_loss_train, y_loss_val, save_path="plot/loss_plot.png"):
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    epochs = range(1, len(y_loss_train) + 1)
+    plt.figure(figsize=(10, 4))
+    plt.plot(epochs, y_loss_train, 'o-', label='Training Loss')
+    if y_loss_val is not None:
+        plt.plot(epochs, y_loss_val, 's-', label='Validation Loss')
+    plt.title('Loss by Epoch')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+def draw_acc_graph(y_acc_train, y_acc_val, save_path="plot/accuracy_plot.png"):
+    save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    epochs = range(1, len(y_acc_train) + 1)
+    plt.figure(figsize=(10, 4))
+    plt.plot(epochs, y_acc_train, 'o-', label='Training Accuracy')
+    if y_acc_val is not None:
+        plt.plot(epochs, y_acc_val, 's-', label='Validation Accuracy')
+    plt.title('Accuracy by Epoch')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+
 if __name__ == "__main__":
 
     #create_training_directory(adp.Dataset_CREMA_D)
@@ -242,26 +300,29 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
-    num_epochs = 2  # number of epochs
+    num_epochs = 5  # number of epochs
 
-    # training
-    trained_model, train_losses, best_loss = train_model(
-        model=model,
-        criterion=criterion,
-        optimizer=optimizer,
-        dataloader=dataloader,
-        num_epochs=num_epochs,
-    )
-
-    #evaluation
 
     test_dataloader = DataLoader(FrameDataset(test_path,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
-    test_accuracy = evaluate_model(model=trained_model, dataloader=test_dataloader)
-    print(f"Test accuracy: {test_accuracy:.2%}")
+    # training (and evaluation)
+    trained_model, train_losses, train_accuracies, val_losses, val_accuracies = train_model(
+        model=model,
+        criterion=criterion,
+        optimizer=optimizer,
+        train_dataloader=dataloader,
+        val_dataloader=test_dataloader,
+        num_epochs=num_epochs,
+    )
+    draw_loss_graph(train_losses, train_accuracies)
+    draw_acc_graph(train_accuracies, val_accuracies)
+
+    model_checkpoint_dir = "C:/Users/alber/PycharmProjects/PythonProject1/saved_models/conv3d_best_model_epoch_20.pth"
+    #test_accuracy = evaluate_model(model=load_previous_model(model_checkpoint_dir), dataloader=test_dataloader)
+    #print(f"Test accuracy: {test_accuracy:.2%}")
 
     # inference
 
-    new_video_directory = ""
-    model_checkpoint_dir = ""
+    new_video_directory = "C:/Users/alber/Desktop/TrainingDef/training_dir/test/happy/Kellan_1027_WSI_HAP_XX"
+
     #make_inference(model_checkpoint_dir,new_video_directory,transform)
