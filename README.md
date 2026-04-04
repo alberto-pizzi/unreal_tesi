@@ -109,9 +109,12 @@ Function allowed are only: **train**, **evaluate** and **inference**. So you sho
 9. Set `model`, choosing right model class
 10. Set loss type (`criterion`) and `optimizer`
 11. Set `num_epochs`
-12. Call the right function based on the type of operation: `train_model(...)`, `evaluate_model(...)` or `make_inference(...)`
-13. Turn off or remove useless code lines
+12. Call the right function based on the type of operation: `train_model(...)`, `evaluate_model(...)` or `make_inference(...)`. Also read following banner.
+14. Turn off or remove useless code lines
 
+> [!IMPORTANT]
+> If you pass `val_dataloader` at `train_model(...)` function, it will also make evaluation for each apoch during training (useful for stats).
+> 
 ## Requirements
 
 - Unreal Engine 5.6 with Python API and Movie Render Queue Plugin, better with Windows 10/11 with complete compatibility.
