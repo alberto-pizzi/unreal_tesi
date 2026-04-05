@@ -54,7 +54,7 @@ class EyeCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = frame_row.get("EyeLookOutLeft", 0) - frame_row.get("EyeLookInLeft", 0)
         y = frame_row.get("EyeLookUpLeft", 0) - frame_row.get("EyeLookDownLeft", 0)
         return x, y
@@ -65,7 +65,7 @@ class JawOpenCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = frame_row.get("JawLeft", 0) - frame_row.get("JawRight", 0)
         y = frame_row.get("JawOpen", 0) * 0.42
         return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
@@ -76,7 +76,7 @@ class MouthCornerLeftCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = frame_row.get("MouthLeft", 0) - frame_row.get("MouthRight", 0)
         y = frame_row.get("MouthSmileLeft", 0) - frame_row.get("MouthFrownLeft", 0)
         return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
@@ -87,7 +87,7 @@ class MouthCornerRightCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = frame_row.get("MouthRight", 0) - frame_row.get("MouthLeft", 0)
         y = frame_row.get("MouthSmileRight", 0) - frame_row.get("MouthDepressRight", 0)
         return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
@@ -98,7 +98,7 @@ class NoseLeftCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = 0
         y = frame_row.get("NoseSneerLeft", 0) * EXPRESSION_SCALE
         return x, y
@@ -109,7 +109,7 @@ class NoseRightCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = 0
         y = frame_row.get("NoseSneerRight", 0) * EXPRESSION_SCALE
         return x, y
@@ -130,7 +130,7 @@ class TongueMoveCR(ControlRig):
     def __init__(self, name):
         super().__init__(name)
 
-    def calculate(self, frame_row: dict):
+    def calculate(self, frame_row: dict, source_blendshape: str = None):
         x = frame_row.get("TongueLeft", 0) - frame_row.get("TongueRight", 0)
         y = frame_row.get("TongueUp", 0) - frame_row.get("TongueDown", 0)
         return x * EXPRESSION_SCALE, y * EXPRESSION_SCALE
