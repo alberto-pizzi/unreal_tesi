@@ -356,7 +356,7 @@ if __name__ == "__main__":
     end = time.time()
     time_seconds = end - start
     time_minutes = time_seconds / 60
-    print(f"Time elapsed: {time_minutes:.2f} seconds")
+    print(f"Time elapsed: {time_seconds:.2f} seconds")
     print(f"Training time: {time_minutes:.4f} minutes")
     save_data(train_losses,val_losses,loss_data_path)
     save_data(train_accuracies,val_accuracies,accuracy_data_path)
