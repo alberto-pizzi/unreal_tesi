@@ -11,6 +11,7 @@ from training_maps import *
 from training_dataset_modules import *
 import matplotlib.pyplot as plt
 from pathlib import Path
+import time
 
 # all videos directory
 #videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
@@ -233,7 +234,7 @@ def load_previous_model(model_checkpoint_dir:str):
 
     return model
 
-def draw_loss_graph(y_loss_train, y_loss_val, save_path="plot/loss_plot.png"):
+def draw_loss_graph(y_loss_train, y_loss_val,model_name:str, save_path="plot/loss_plot.png"):
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     epochs = range(1, len(y_loss_train) + 1)
@@ -241,7 +242,7 @@ def draw_loss_graph(y_loss_train, y_loss_val, save_path="plot/loss_plot.png"):
     plt.plot(epochs, y_loss_train, 'o-', label='Training Loss')
     if y_loss_val is not None:
         plt.plot(epochs, y_loss_val, 's-', label='Validation Loss')
-    plt.title('Loss by Epoch')
+    plt.title('Loss by Epoch for ' + model_name + " model")
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
@@ -250,7 +251,7 @@ def draw_loss_graph(y_loss_train, y_loss_val, save_path="plot/loss_plot.png"):
     plt.savefig(save_path)
     plt.close()
 
-def draw_acc_graph(y_acc_train, y_acc_val, save_path="plot/accuracy_plot.png"):
+def draw_acc_graph(y_acc_train, y_acc_val,model_name:str, save_path="plot/accuracy_plot.png"):
     save_path = Path(save_path)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     epochs = range(1, len(y_acc_train) + 1)
@@ -258,7 +259,7 @@ def draw_acc_graph(y_acc_train, y_acc_val, save_path="plot/accuracy_plot.png"):
     plt.plot(epochs, y_acc_train, 'o-', label='Training Accuracy')
     if y_acc_val is not None:
         plt.plot(epochs, y_acc_val, 's-', label='Validation Accuracy')
-    plt.title('Accuracy by Epoch')
+    plt.title('Accuracy by Epoch for ' + model_name + " model")
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
@@ -290,7 +291,7 @@ if __name__ == "__main__":
     print(f"Num emotions: {num_classes}")
 
     #model = ResNetFrameModel(num_classes)
-    model = Conv3DModel(num_classes)
+    model = ResNetLSTMModel(num_classes)
     model.to(device)
 
     print("Model used: ", model.model_type.value)
@@ -300,11 +301,12 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
-    num_epochs = 5  # number of epochs
+    num_epochs = 50  # number of epochs
 
 
     test_dataloader = DataLoader(FrameDataset(test_path,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
+    start = time.time()
     # training (and evaluation)
     trained_model, train_losses, train_accuracies, val_losses, val_accuracies = train_model(
         model=model,
@@ -314,8 +316,14 @@ if __name__ == "__main__":
         val_dataloader=test_dataloader,
         num_epochs=num_epochs,
     )
-    draw_loss_graph(train_losses, train_accuracies)
-    draw_acc_graph(train_accuracies, val_accuracies)
+    end = time.time()
+    time_seconds = end - start
+    time_minutes = time_seconds / 60
+    print(f"Time elapsed: {time_minutes:.2f} seconds")
+    print(f"Training time: {time_minutes:.4f} minutes")
+    draw_loss_graph(train_losses, val_losses,model.model_type.value)
+    draw_acc_graph(train_accuracies, val_accuracies,model.model_type.value)
+
 
     model_checkpoint_dir = "C:/Users/alber/PycharmProjects/PythonProject1/saved_models/conv3d_best_model_epoch_20.pth"
     #test_accuracy = evaluate_model(model=load_previous_model(model_checkpoint_dir), dataloader=test_dataloader)
