@@ -12,6 +12,7 @@ from training_dataset_modules import *
 import matplotlib.pyplot as plt
 from pathlib import Path
 import time
+import csv
 
 # all videos directory
 #videos_directory = "C:/Users/alber/Downloads/MiniDataset/dataset_copy/rgb_frames"
@@ -20,6 +21,8 @@ videos_directory = "C:/Users/alber/Desktop/TrainingDef/rgb_frames"
 training_base_directory = "C:/Users/alber/Desktop/TrainingDef/training_dir"
 #training_base_directory = "C:/Users/alber/Desktop/ProvaLink/output"
 #training_base_directory = "C:/Users/alber/Downloads/MiniDataset/training_dataset/training_rgb"
+loss_data_path = "plot/data_loss.csv"
+accuracy_data_path = "plot/data_accuracy.csv"
 
 videos_path = Path(videos_directory)
 training_path = Path(training_base_directory)
@@ -190,7 +193,7 @@ def predict_emotion(model, video_folder_path, transform, device, max_frames=16):
 
     return pred, confidence
 
-def make_inference(model_checkpoint_path: str, new_video_directory: str, transform):
+def make_inference(model_checkpoint_path: str, new_video_directory: str,id_2_label_map:dict, transform):
     model = load_previous_model(model_checkpoint_path)
     model.to(device)
 
@@ -201,7 +204,8 @@ def make_inference(model_checkpoint_path: str, new_video_directory: str, transfo
         device
     )
 
-    emotion_name = adp.d_maps.ID2LABEL.get(emotion_id, "Emotion not found!")
+    #emotion_name = adp.d_maps.ID2LABEL.get(emotion_id, "Emotion not found!")
+    emotion_name = id_2_label_map.get(emotion_id, "Emotion not found!")
 
     print(f"Emotion: {emotion_name}")
     print(f"Confidence: {confidence:.2%}")
@@ -268,6 +272,35 @@ def draw_acc_graph(y_acc_train, y_acc_val,model_name:str, save_path="plot/accura
     plt.savefig(save_path)
     plt.close()
 
+def save_data(y_train, y_val, save_path: str):
+    with open(save_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["y_train", "y_val"])
+        for yti,yai in zip(y_train, y_val):
+            writer.writerow([yti, yai])
+    print("Data saved in: ", save_path)
+
+def load_data(path:str):
+    y_train = []
+    y_val = []
+    with open(path, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            y_train.append(float(row['y_train']))
+            y_val.append(float(row['y_val']))
+
+    print("Data loaded from ", path)
+    return y_train,y_val
+
+def get_new_label_maps():
+
+    folder_labels = [f.stem for f in train_path.iterdir() if f.is_dir()]
+    label_2_id = {item: i for i, item in enumerate(folder_labels)}
+    id_2_label = {i: item for i, item in enumerate(folder_labels)}
+
+    n_labels = len(folder_labels)
+
+    return label_2_id,id_2_label
 
 if __name__ == "__main__":
 
@@ -279,16 +312,20 @@ if __name__ == "__main__":
 
     sampling_type = SamplingType.CONSECUTIVE
 
+    label_2_id,id_2_label = get_new_label_maps()
+    num_classes = len(label_2_id)
+
     #dataloader = create_dataloader(root, batch_size=8, transform=transform)
-    dataloader = DataLoader(FrameDataset(root,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
+    dataloader = DataLoader(FrameDataset(root,label_2_id,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
     print("Sampling type: ",dataloader.dataset.sampling_type.value)
     print(f"Dataset size: {len(dataloader.dataset)}")
     print(f"Num batches: {len(dataloader)}")
 
 
-    num_classes = len(data_enums.Emotions)
-    print(f"Num emotions: {num_classes}")
+    #num_classes = len(data_enums.Emotions)
+
+    print(f"Num emotion labels : {num_classes}")
 
     #model = ResNetFrameModel(num_classes)
     model = ResNetLSTMModel(num_classes)
@@ -301,10 +338,10 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 
-    num_epochs = 50  # number of epochs
+    num_epochs = 30  # number of epochs
 
 
-    test_dataloader = DataLoader(FrameDataset(test_path,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
+    test_dataloader = DataLoader(FrameDataset(test_path,label_2_id,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
     start = time.time()
     # training (and evaluation)
@@ -321,8 +358,12 @@ if __name__ == "__main__":
     time_minutes = time_seconds / 60
     print(f"Time elapsed: {time_minutes:.2f} seconds")
     print(f"Training time: {time_minutes:.4f} minutes")
-    draw_loss_graph(train_losses, val_losses,model.model_type.value)
-    draw_acc_graph(train_accuracies, val_accuracies,model.model_type.value)
+    save_data(train_losses,val_losses,loss_data_path)
+    save_data(train_accuracies,val_accuracies,accuracy_data_path)
+    y_t,y_v = load_data(loss_data_path)
+    draw_loss_graph(y_t, y_v,model.model_type.value)
+    y_t, y_v = load_data(accuracy_data_path)
+    draw_acc_graph(y_t, y_v,model.model_type.value)
 
 
     model_checkpoint_dir = "C:/Users/alber/PycharmProjects/PythonProject1/saved_models/conv3d_best_model_epoch_20.pth"
@@ -333,4 +374,4 @@ if __name__ == "__main__":
 
     new_video_directory = "C:/Users/alber/Desktop/TrainingDef/training_dir/test/happy/Kellan_1027_WSI_HAP_XX"
 
-    #make_inference(model_checkpoint_dir,new_video_directory,transform)
+    #make_inference(model_checkpoint_dir,new_video_directory,id_2_label,transform)

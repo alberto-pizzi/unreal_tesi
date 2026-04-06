@@ -50,7 +50,7 @@ sampling_map = {
 
 # frame dataset with different lengths handling
 class FrameDataset(Dataset):
-    def __init__(self, root_dir, transform=None, max_frames=16,sampling_type=SamplingType.UNIFORM):
+    def __init__(self, root_dir, label_2_id_map:dict, transform=None, max_frames=16, sampling_type=SamplingType.UNIFORM):
         self.root_dir = Path(root_dir)
         self.transform = transform if transform else transforms.ToTensor()
         self.max_frames = max_frames
@@ -63,9 +63,9 @@ class FrameDataset(Dataset):
         self.labels = []
 
         # labeling
-        for label_name in data_enums.Emotions:
-            emotion_label = label_name.value
-            emotion_id = adp.d_maps.LABEL2ID[label_name.value]
+        for label_name,label_id in label_2_id_map.items():
+            emotion_label = label_name
+            emotion_id = label_id
 
             label_dir = self.root_dir / emotion_label
             if not label_dir.exists():
