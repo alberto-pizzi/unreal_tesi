@@ -194,7 +194,7 @@ def predict_emotion(model, video_folder_path, transform, device, max_frames=16):
     return pred, confidence
 
 def make_inference(model_checkpoint_path: str, new_video_directory: str,id_2_label_map:dict, transform):
-    model = load_previous_model(model_checkpoint_path)
+    model = load_previous_model(model_checkpoint_path,len(id_2_label_map))
     model.to(device)
 
     emotion_id, confidence = predict_emotion(
@@ -221,8 +221,8 @@ def get_transform():
 
     return transform
 
-def load_previous_model(model_checkpoint_dir:str):
-    num_classes = len(data_enums.Emotions)
+def load_previous_model(model_checkpoint_dir:str,num_classes:int):
+    #num_classes = len(data_enums.Emotions)
     checkpoint_path = Path(model_checkpoint_dir)
     checkpoint_name = checkpoint_path.stem
 
@@ -244,7 +244,7 @@ def draw_loss_graph(y_loss_train, y_loss_val,model_name:str, save_path="plot/los
     epochs = range(1, len(y_loss_train) + 1)
     plt.figure(figsize=(10, 4))
     plt.plot(epochs, y_loss_train, 'o-', label='Training Loss')
-    if y_loss_val is not None:
+    if y_loss_val:
         plt.plot(epochs, y_loss_val, 's-', label='Validation Loss')
     plt.title('Loss by Epoch for ' + model_name + " model")
     plt.xlabel('Epoch')
@@ -261,7 +261,7 @@ def draw_acc_graph(y_acc_train, y_acc_val,model_name:str, save_path="plot/accura
     epochs = range(1, len(y_acc_train) + 1)
     plt.figure(figsize=(10, 4))
     plt.plot(epochs, y_acc_train, 'o-', label='Training Accuracy')
-    if y_acc_val is not None:
+    if y_acc_val:
         plt.plot(epochs, y_acc_val, 's-', label='Validation Accuracy')
     plt.title('Accuracy by Epoch for ' + model_name + " model")
     plt.xlabel('Epoch')
@@ -275,9 +275,14 @@ def draw_acc_graph(y_acc_train, y_acc_val,model_name:str, save_path="plot/accura
 def save_data(y_train, y_val, save_path: str):
     with open(save_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(["y_train", "y_val"])
-        for yti,yai in zip(y_train, y_val):
-            writer.writerow([yti, yai])
+        if y_val:  # if NOT empty
+            writer.writerow(["y_train", "y_val"])
+            for yti, yai in zip(y_train, y_val):
+                writer.writerow([yti, yai])
+        else:  # se è vuota
+            writer.writerow(["y_train"])
+            for yti in y_train:
+                writer.writerow([yti])
     print("Data saved in: ", save_path)
 
 def load_data(path:str):
@@ -285,9 +290,11 @@ def load_data(path:str):
     y_val = []
     with open(path, 'r') as f:
         reader = csv.DictReader(f)
+        has_y_val = 'y_val' in reader.fieldnames
         for row in reader:
             y_train.append(float(row['y_train']))
-            y_val.append(float(row['y_val']))
+            if has_y_val:
+                y_val.append(float(row['y_val']))
 
     print("Data loaded from ", path)
     return y_train,y_val
@@ -315,6 +322,7 @@ if __name__ == "__main__":
     label_2_id,id_2_label = get_new_label_maps()
     num_classes = len(label_2_id)
 
+
     #dataloader = create_dataloader(root, batch_size=8, transform=transform)
     dataloader = DataLoader(FrameDataset(root,label_2_id,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
 
@@ -328,7 +336,7 @@ if __name__ == "__main__":
     print(f"Num emotion labels : {num_classes}")
 
     #model = ResNetFrameModel(num_classes)
-    model = ResNetLSTMModel(num_classes)
+    model = VideoTransformerModel(num_classes)
     model.to(device)
 
     print("Model used: ", model.model_type.value)
@@ -342,7 +350,7 @@ if __name__ == "__main__":
 
 
     test_dataloader = DataLoader(FrameDataset(test_path,label_2_id,transform,sampling_type=sampling_type), batch_size=8, shuffle=True)
-
+    
     start = time.time()
     # training (and evaluation)
     trained_model, train_losses, train_accuracies, val_losses, val_accuracies = train_model(
@@ -350,7 +358,7 @@ if __name__ == "__main__":
         criterion=criterion,
         optimizer=optimizer,
         train_dataloader=dataloader,
-        val_dataloader=test_dataloader,
+        #val_dataloader=test_dataloader,
         num_epochs=num_epochs,
     )
     end = time.time()
@@ -360,18 +368,27 @@ if __name__ == "__main__":
     print(f"Training time: {time_minutes:.4f} minutes")
     save_data(train_losses,val_losses,loss_data_path)
     save_data(train_accuracies,val_accuracies,accuracy_data_path)
+    
     y_t,y_v = load_data(loss_data_path)
     draw_loss_graph(y_t, y_v,model.model_type.value)
     y_t, y_v = load_data(accuracy_data_path)
     draw_acc_graph(y_t, y_v,model.model_type.value)
 
 
-    model_checkpoint_dir = "C:/Users/alber/PycharmProjects/PythonProject1/saved_models/conv3d_best_model_epoch_20.pth"
+
+    model_checkpoint_dir = "C:/Users/alber/PycharmProjects/PythonProject1/saved_models/videotransformer_best_model_epoch_23.pth"
     #test_accuracy = evaluate_model(model=load_previous_model(model_checkpoint_dir), dataloader=test_dataloader)
     #print(f"Test accuracy: {test_accuracy:.2%}")
 
     # inference
 
     new_video_directory = "C:/Users/alber/Desktop/TrainingDef/training_dir/test/happy/Kellan_1027_WSI_HAP_XX"
-
-    #make_inference(model_checkpoint_dir,new_video_directory,id_2_label,transform)
+    """
+    start = time.time()
+    make_inference(model_checkpoint_dir,new_video_directory,id_2_label,transform)
+    end = time.time()
+    time_seconds = end - start
+    time_ms = time_seconds * 1000
+    print(f"Inference time elapsed: {time_seconds:.4f} seconds")
+    print(f"Inference time elapsed: {time_ms:.4f} ms")
+    """
