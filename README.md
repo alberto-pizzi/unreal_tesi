@@ -1,11 +1,5 @@
 
-> [!WARNING]
-> This repository is still under active development and updating...
 
-
->  [!CAUTION]
-> Be carefull. Not all files are "ready-to-use" at now...
-> 
 # Development of a processing pipeline to simulate neuromorphic event streams and train neural networks for emotion recognition via animated humanoids.
 
 ## Some Audio Dataset
@@ -31,9 +25,7 @@
 
 
 ## How this directory works
-> [!WARNING]
-> Some files or directories may be refactored...
->
+
 
 -`main.py`: It is the main file, 
 
