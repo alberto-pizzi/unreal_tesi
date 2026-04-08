@@ -210,6 +210,8 @@ def make_inference(model_checkpoint_path: str, new_video_directory: str,id_2_lab
     print(f"Emotion: {emotion_name}")
     print(f"Confidence: {confidence:.2%}")
 
+    return emotion_name, confidence
+
 def get_transform():
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -308,6 +310,31 @@ def get_new_label_maps():
     n_labels = len(folder_labels)
 
     return label_2_id,id_2_label
+
+def get_inference_mean_stats(model_checkpoint_dir, testing_videos_folder, id_2_label, transform):
+    testing_videos_folder_path = Path(testing_videos_folder)
+    subfolders = [p for d in testing_videos_folder_path.iterdir() if d.is_dir()
+                  for p in d.iterdir() if p.is_dir()]
+
+    n_videos = len(subfolders)
+    times_ms = []
+    confidences = []
+
+    for subdir in subfolders:
+        start = time.time()
+        emotion_name, confidence = make_inference(model_checkpoint_dir, str(subdir), id_2_label, transform)
+
+        end = time.time()
+        time_seconds = end - start
+        time_ms = time_seconds * 1000
+        times_ms.append(time_ms)
+        confidences.append(confidence)
+
+
+    mean_time_ms = sum(times_ms) / n_videos
+    mean_confidence = sum(confidences) / n_videos
+    #print(f"Mean time: {mean_time_ms:.4f} ms")
+    return mean_time_ms,mean_confidence
 
 if __name__ == "__main__":
 
