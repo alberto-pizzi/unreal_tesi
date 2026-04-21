@@ -8,11 +8,17 @@ import audio_dataset_processing as adp
 from audio_dataset_processing import limit_AudioInfo
 from data_enums import Emotions
 
-BASE_DIR = Path(__file__).resolve().parent
+from dotenv import load_dotenv
 
-# Settings
-API_KEY = "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"  # NVIDIA API
-FUNCTION_ID = "9327c39f-a361-4e02-bd72-e11b4c9b7b5e"  #  James model
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv()
+
+# Env settings
+API_KEY = os.getenv("API_KEY")
+FUNCTION_ID = os.getenv("FUNCTION_ID")
+
+# Paths
 AUDIO_DIR = BASE_DIR / "input_audio_files"  # input folder
 OUTPUT_FOLDER = "output_csv" # output folder
 CLIENT_NAME = "nim_a2f_3d_client.py"
